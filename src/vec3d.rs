@@ -283,6 +283,20 @@ mod vec3d_tests {
     }
 
     #[test]
+    fn test_vec3d_cross() {
+        let vec = Vec3d::new(1.0, 0.0, 0.0);
+        let vec2 = Vec3d::new(0.0, 1.0, 0.0);
+        let result = cross(&vec, &vec2);
+        assert_eq!(result, Vec3d::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn test_vec3d_display() {
+        let vec = Vec3d::new(1.0, 2.0, 3.0);
+        assert_eq!(format!("{}", vec), "Vec3d[1, 2, 3]");
+    }
+
+    #[test]
     fn test_vec3d_neg() {
         let vec = Vec3d::new(1.0, 2.0, 3.0);
         let result = -vec;
