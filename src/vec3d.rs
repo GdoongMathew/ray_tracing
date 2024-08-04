@@ -42,7 +42,7 @@ impl Vec3d {
     /// ```
     /// use ray_tracing::vec3d::Vec3d;
     /// let vec = Vec3d::new(1.0, 2.0, 3.0);
-    /// assert_eq!(vec.length(), 3.7416574);
+    /// assert_eq!(vec.length(), 3.7416573867739413);
     /// ```
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
@@ -65,7 +65,7 @@ impl Vec3d {
     /// use ray_tracing::vec3d::Vec3d;
     /// let vec = Vec3d::new(1.0, 2.0, 3.0);
     /// let result = vec.unit_vector();
-    /// assert_eq!(result, Vec3d::new(0.26726124, 0.5345225, 0.8017837));
+    /// assert_eq!(result, Vec3d::new(0.2672612419124244, 0.5345224838248488, 0.8017837257372732));
     /// ```
     pub fn unit_vector(&self) -> Self {
         *self / self.length()
@@ -439,7 +439,7 @@ mod vec3d_tests {
     #[test]
     fn test_vec3d_length() {
         let vec = Vec3d::new(1.0, 2.0, 3.0);
-        assert_eq!(vec.length(), 3.7416574);
+        assert_eq!(vec.length(), 3.7416573867739413);
     }
 
     #[test]
@@ -464,7 +464,7 @@ mod vec3d_tests {
 
         let vec = Vec3d::new(1.0, 2.0, 3.0);
         let result = vec.unit_vector();
-        assert_eq!(result, Vec3d::new(0.26726124, 0.5345225, 0.8017837));
+        assert_eq!(result, Vec3d::new(0.2672612419124244, 0.5345224838248488, 0.8017837257372732));
     }
 
     #[test]
