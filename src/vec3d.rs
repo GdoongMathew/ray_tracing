@@ -34,6 +34,19 @@ impl Vec3d {
 }
 
 
+/// Implementation of ``std::fmt::Display`` for ``Vec3d``
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let vec = Vec3d::new(1.0, 2.0, 3.0);
+/// assert_eq!(format!("{}", vec), "Vec3d[1, 2, 3]");
+/// ```
+impl std::fmt::Display for Vec3d {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Vec3d[{}, {}, {}]", self.x(), self.y(), self.z())
+    }
+}
+
 pub fn dot(v1: &Vec3d, v2: &Vec3d) -> f32 {
     v1.x() * v2.x() + v1.y() * v2.y() + v1.z() * v2.z()
 }
