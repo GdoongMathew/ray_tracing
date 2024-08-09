@@ -37,6 +37,12 @@ pub struct HittableVec {
 }
 
 impl HittableVec {
+    pub fn new() -> Self {
+        Self {
+            objects: Vec::new(),
+        }
+    }
+
     pub fn add(&mut self, object: Box<dyn Hittable>) {
         self.objects.push(object);
     }
