@@ -4,16 +4,6 @@ use crate::vec3d::Vec3d;
 use Vec3d as Color;
 
 
-
-pub fn write_color(path: &String, color: &Color) {
-    let ir = (255.999 * color.x()) as i32;
-    let ig = (255.999 * color.y()) as i32;
-    let ib = (255.999 * color.z()) as i32;
-
-    println!("image color: {} {} {}", ir, ig, ib);
-}
-
-
 pub fn write_image(path: &str, pixels: &Vec<Color>, width: i32, height: i32) {
     let mut img = image::ImageBuffer::new(width as u32, height as u32);
 
