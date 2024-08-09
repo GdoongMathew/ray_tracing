@@ -31,6 +31,19 @@ impl Vec3d {
         }
     }
 
+    /// Returns a Vec3d with all components set to zero
+    /// # Examples
+    /// ```
+    /// use ray_tracing::vec3d::Vec3d;
+    /// let vec = Vec3d::zero();
+    /// assert_eq!(vec, Vec3d::new(0.0, 0.0, 0.0));
+    /// ```
+    pub fn zero() ->  Self {
+        Self {
+            vector: (0.0, 0.0, 0.0)
+        }
+    }
+
     pub fn x(&self) -> f64 { self.vector.0 }
 
     pub fn y(&self) -> f64 { self.vector.1 }
