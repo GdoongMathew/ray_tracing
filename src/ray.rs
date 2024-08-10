@@ -103,8 +103,8 @@ impl Interval {
     }
 }
 
-static EMPTY: Interval = Interval { min: f64::INFINITY, max: f64::NEG_INFINITY };
-static UNIVERSE: Interval = Interval { min: f64::NEG_INFINITY, max: f64::INFINITY };
+pub static EMPTY: Interval = Interval { min: f64::INFINITY, max: f64::NEG_INFINITY };
+pub static UNIVERSE: Interval = Interval { min: f64::NEG_INFINITY, max: f64::INFINITY };
 
 
 #[cfg(test)]
