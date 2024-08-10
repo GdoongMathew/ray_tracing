@@ -1,5 +1,5 @@
 use crate::vec3d::Vec3d;
-use crate::object::{HittableVec, Hittable, HitRecord};
+use crate::object::{HittableVec, Hittable};
 use crate::ray::{Ray, Interval};
 use rand::Rng;
 
@@ -98,10 +98,9 @@ impl Camera {
     fn ray_color<H: Hittable>(ray: &Ray, world: &H, depth: i32) -> Vec3d {
         if depth <= 0 {return Vec3d::new(0.0, 0.0, 0.0);}
 
-        let mut hit_record = HitRecord::new();
-        if world.hit(ray, &Interval { min: 0.0001, max: f64::INFINITY }, &mut hit_record) {
-            let direction = hit_record.normal + Vec3d::random().unit_vector();
-            return Self::ray_color(&Ray::new(hit_record.point, direction), world, depth - 1) * 0.5;
+        if let Some(hit_record) = world.hit(ray, &Interval { min: 0.0001, max: f64::INFINITY }) {
+            let target = hit_record.point + hit_record.normal + Vec3d::random().unit_vector();
+            return Self::ray_color(&Ray::new(hit_record.point, target - hit_record.point), world, depth - 1) * 0.5;
         }
 
         let unit_direction = ray.direction.unit_vector();

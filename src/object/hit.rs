@@ -28,7 +28,7 @@ impl HitRecord {
 
 
 pub trait Hittable {
-    fn hit(&self, ray: &Ray, interval: &Interval, rec: &mut HitRecord) -> bool;
+    fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord>;
 }
 
 
@@ -53,19 +53,23 @@ impl HittableVec {
 }
 
 impl Hittable for HittableVec {
-    fn hit(&self, ray: &Ray, interval: &Interval, rec: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
         let mut hit_record = HitRecord::new();
         let mut hit_anything = false;
         let mut closest_so_far = interval.max;
 
         for object in self.objects.iter() {
-            if object.hit(ray, &Interval{min: interval.min, max: closest_so_far}, &mut hit_record) {
+            if let Some(rec) = object.hit(ray, &Interval{min: interval.min, max: closest_so_far}) {
                 hit_anything = true;
-                closest_so_far = hit_record.t;
-                rec.clone_from(&hit_record);
+                closest_so_far = rec.t;
+                hit_record.clone_from(&rec);
             }
         }
 
-        hit_anything
+        if hit_anything {
+            Some(hit_record)
+        } else {
+            None
+        }
     }
 }
