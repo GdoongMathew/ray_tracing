@@ -98,6 +98,15 @@ impl Interval {
         self.min < t && t < self.max
     }
 
+    /// Clamps a value to the interval.
+    /// # Arguments
+    /// * `t` - The value to clamp.
+    /// # Returns
+    /// The clamped value.
+    pub fn clamp(&self, t: f64) -> f64 {
+        if t < self.min { self.min } else if t > self.max { self.max } else { t }
+    }
+
     pub fn size(&self) -> f64 {
         self.max - self.min
     }
@@ -129,6 +138,16 @@ mod test_interval {
         assert_eq!(interval.surrounds(1.5), true);
         assert_eq!(interval.surrounds(2.0), false);
         assert_eq!(interval.surrounds(2.1), false);
+    }
+
+    #[test]
+    fn test_interval_clamp() {
+        let interval = Interval { min: 1.0, max: 2.0 };
+        assert_eq!(interval.clamp(0.9), 1.0);
+        assert_eq!(interval.clamp(1.0), 1.0);
+        assert_eq!(interval.clamp(1.5), 1.5);
+        assert_eq!(interval.clamp(2.0), 2.0);
+        assert_eq!(interval.clamp(2.1), 2.0);
     }
 
     #[test]
