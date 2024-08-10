@@ -1,5 +1,5 @@
 use crate::vec3d::{Vec3d, dot};
-use crate::ray::Ray;
+use crate::ray::{Ray, Interval};
 
 #[derive(Debug, Clone, Copy)]
 pub struct HitRecord {
@@ -28,7 +28,7 @@ impl HitRecord {
 
 
 pub trait Hittable {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool;
+    fn hit(&self, ray: &Ray, interval: &Interval, rec: &mut HitRecord) -> bool;
 }
 
 
@@ -53,13 +53,13 @@ impl HittableVec {
 }
 
 impl Hittable for HittableVec {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, interval: &Interval, rec: &mut HitRecord) -> bool {
         let mut hit_record = HitRecord::new();
         let mut hit_anything = false;
-        let mut closest_so_far = t_max;
+        let mut closest_so_far = interval.max;
 
         for object in self.objects.iter() {
-            if object.hit(ray, t_min, closest_so_far, &mut hit_record) {
+            if object.hit(ray, &Interval{min: interval.min, max: closest_so_far}, &mut hit_record) {
                 hit_anything = true;
                 closest_so_far = hit_record.t;
                 rec.clone_from(&hit_record);
