@@ -98,6 +98,24 @@ impl Vec3d {
             rng.gen_range(min..max),
         )
     }
+
+    pub fn random_in_unit_sphere() -> Self {
+        loop {
+            let p = Vec3d::gen_range(-1.0, 1.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
+
+    pub fn random_on_hemisphere(normal: &Vec3d) -> Self {
+        let in_unit_sphere = Vec3d::random_in_unit_sphere();
+        if dot(&in_unit_sphere, normal) > 0.0 {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
+    }
 }
 
 

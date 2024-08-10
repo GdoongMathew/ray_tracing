@@ -17,6 +17,8 @@ pub struct Camera {
 
     samples_per_pixel: i32,
     samples_scale: f64,
+
+    max_depth: i32,
 }
 
 
@@ -44,6 +46,7 @@ impl Camera {
             viewport_v,
             samples_per_pixel: 1,
             samples_scale: 1.0,
+            max_depth: 10,
         };
 
         ret.set_samples_per_pixel(10);
@@ -55,6 +58,8 @@ impl Camera {
         self.samples_per_pixel = samples_per_pixel;
         self.samples_scale = 1.0 / (samples_per_pixel as f64);
     }
+
+    pub fn set_depth(&mut self, max_depth: i32) -> () { self.max_depth = max_depth; }
 
     pub fn resolution_width(&self) -> i32 { self.resolution.0 }
 
@@ -90,10 +95,13 @@ impl Camera {
         self.pixel_upper_left() + self.pixel_delta_u() * w + self.pixel_delta_v() * h
     }
 
-    fn ray_color<H: Hittable>(ray: &Ray, world: &H) -> Vec3d {
+    fn ray_color<H: Hittable>(ray: &Ray, world: &H, depth: i32) -> Vec3d {
+        if depth <= 0 {return Vec3d::new(0.0, 0.0, 0.0);}
+
         let mut hit_record = HitRecord::new();
         if world.hit(ray, &Interval { min: 0.0, max: f64::INFINITY }, &mut hit_record) {
-            return (hit_record.normal + Vec3d::new(1.0, 1.0, 1.0)) * 0.5;
+            let direction = Vec3d::random_on_hemisphere(&hit_record.normal);
+            return Self::ray_color(&Ray::new(hit_record.point, direction), world, depth - 1) * 0.5;
         }
 
         let unit_direction = ray.direction.unit_vector();
@@ -131,7 +139,7 @@ impl Camera {
                 let mut color = Vec3d::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.sample_ray(w, h);
-                    color += Camera::ray_color(&ray, world);
+                    color += Self::ray_color(&ray, world, self.max_depth);
                 }
                 image[(h * self.resolution_width() + w) as usize] = color * self.samples_scale;
             }
