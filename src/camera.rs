@@ -3,12 +3,12 @@ use crate::object::{HittableVec, Hittable, HitRecord};
 use crate::ray::{Ray, Interval};
 
 pub struct Camera {
-    pub center: Vec3d,
+    center: Vec3d,
     focal_length: f64,
     aspect_ratio: f64,
 
-    pub resolution: (i32, i32),
-    pub viewport_dims: (f64, f64),
+    resolution: (i32, i32),
+    viewport_dims: (f64, f64),
 
     viewport_u: Vec3d,
     viewport_v: Vec3d,
@@ -39,22 +39,15 @@ impl Camera {
             viewport_v,
         }
     }
+    pub fn set_center(&mut self, center: Vec3d) -> () { self.center = center; }
 
-    pub fn resolution_width(&self) -> i32 {
-        self.resolution.0
-    }
+    pub fn resolution_width(&self) -> i32 { self.resolution.0 }
 
-    pub fn resolution_height(&self) -> i32 {
-        self.resolution.1
-    }
+    pub fn resolution_height(&self) -> i32 { self.resolution.1 }
 
-    pub fn viewport_width(&self) -> f64 {
-        self.viewport_dims.0
-    }
+    pub fn viewport_width(&self) -> f64 { self.viewport_dims.0 }
 
-    pub fn viewport_height(&self) -> f64 {
-        self.viewport_dims.1
-    }
+    pub fn viewport_height(&self) -> f64 { self.viewport_dims.1 }
 
     pub fn pixel_delta_u(&self) -> Vec3d {
         // The pixel delta in the u (x) direction.
