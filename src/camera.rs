@@ -1,6 +1,8 @@
 use crate::vec3d::Vec3d;
 use crate::object::{HittableVec, Hittable, HitRecord};
 use crate::ray::{Ray, Interval};
+use rand::Rng;
+
 
 pub struct Camera {
     center: Vec3d,
@@ -12,6 +14,9 @@ pub struct Camera {
 
     viewport_u: Vec3d,
     viewport_v: Vec3d,
+
+    samples_per_pixel: i32,
+    samples_scale: f64,
 }
 
 
@@ -29,7 +34,7 @@ impl Camera {
         let viewport_u = Vec3d::new(viewport_width, 0.0, 0.0);
         let viewport_v = Vec3d::new(0.0, -viewport_height, 0.0);
 
-        Self {
+        let mut ret = Self {
             center,
             focal_length,
             aspect_ratio,
@@ -37,9 +42,19 @@ impl Camera {
             viewport_dims: (viewport_width, viewport_height),
             viewport_u,
             viewport_v,
-        }
+            samples_per_pixel: 1,
+            samples_scale: 1.0,
+        };
+
+        ret.set_samples_per_pixel(10);
+        ret
     }
     pub fn set_center(&mut self, center: Vec3d) -> () { self.center = center; }
+
+    pub fn set_samples_per_pixel(&mut self, samples_per_pixel: i32) -> () {
+        self.samples_per_pixel = samples_per_pixel;
+        self.samples_scale = 1.0 / (samples_per_pixel as f64);
+    }
 
     pub fn resolution_width(&self) -> i32 { self.resolution.0 }
 
@@ -71,8 +86,8 @@ impl Camera {
     /// # Arguments
     /// * `w` - The width coordinate of the pixel.
     /// * `h` - The height coordinate of the pixel.
-    pub fn pixel_center(&self, w: i32, h: i32) -> Vec3d {
-        self.pixel_upper_left() + self.pixel_delta_u() * w as f64 + self.pixel_delta_v() * h as f64
+    pub fn pixel_coords(&self, w: f64, h: f64) -> Vec3d {
+        self.pixel_upper_left() + self.pixel_delta_u() * w + self.pixel_delta_v() * h
     }
 
     fn ray_color<H: Hittable>(ray: &Ray, world: &H) -> Vec3d {
@@ -86,6 +101,24 @@ impl Camera {
         Vec3d::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3d::new(0.5, 0.7, 1.0) * a
     }
 
+    /// Random sample a ray through the pixel at the given width and height coordinate.
+    /// # Arguments
+    /// * `i` - The width coordinate of the pixel.
+    /// * `j` - The height coordinate of the pixel.
+    fn sample_ray(&self, i: i32, j: i32) -> Ray {
+        let mut rng = rand::thread_rng();
+
+        let (offset_i, offset_j) = rng.random::<(f64, f64)>();
+
+        let pixel_sample = self.pixel_coords(
+            i as f64 + offset_i,
+            j as f64 + offset_j,
+        );
+
+        let direction = pixel_sample - self.center;
+        Ray::new(self.center, direction)
+    }
+
     pub fn render(&self, world: &HittableVec) -> Vec<Vec3d> {
         let mut image = vec![
             Vec3d::new(0.0, 0.0, 0.0);
@@ -94,13 +127,13 @@ impl Camera {
 
         for h in 0..self.resolution_height() {
             for w in 0..self.resolution_width() {
-                let pixel_center = self.pixel_center(w, h);
 
-                let ray_direction = pixel_center - self.center;
-                let ray = Ray::new(self.center, ray_direction);
-
-                let color = Camera::ray_color(&ray, world);
-                image[(h * self.resolution_width() + w) as usize] = color;
+                let mut color = Vec3d::new(0.0, 0.0, 0.0);
+                for _ in 0..self.samples_per_pixel {
+                    let ray = self.sample_ray(w, h);
+                    color += Camera::ray_color(&ray, world);
+                }
+                image[(h * self.resolution_width() + w) as usize] = color * self.samples_scale;
             }
         }
         image
