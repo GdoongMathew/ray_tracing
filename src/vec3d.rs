@@ -1,6 +1,7 @@
 use std::fmt::Formatter;
 use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign, Neg};
-
+use rand::Rng;
+use rand::distr::{Distribution, Standard, uniform::{SampleUniform, UniformSampler}};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3d {
@@ -82,6 +83,37 @@ impl Vec3d {
     /// ```
     pub fn unit_vector(&self) -> Self {
         *self / self.length()
+    }
+
+    pub fn random() -> Self {
+        let mut rng = rand::thread_rng();
+        rng.random()
+    }
+
+    pub fn gen_range(min: f64, max: f64) -> Self {
+        let mut rng = rand::thread_rng();
+        Vec3d::new(
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+            rng.gen_range(min..max),
+        )
+    }
+}
+
+
+/// Implementation of ``rand::distr::Distribution`` for ``Vec3d``
+/// # Examples
+/// ```
+/// use rand::Rng;
+/// use rand::distr::Distribution;
+/// use ray_tracing::vec3d::Vec3d;
+/// let mut rng = rand::thread_rng();
+/// let vec: Vec3d = rng.random();
+/// ```
+impl Distribution<Vec3d> for Standard{
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec3d {
+        let (x, y, z) = rng.random::<(f64, f64, f64)>();
+        Vec3d::new(x, y, z)
     }
 }
 
