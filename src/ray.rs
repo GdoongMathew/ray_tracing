@@ -71,3 +71,81 @@ mod test_ray {
         assert_eq!(result, Vec3d::new(13.0, 17.0, 21.0));
     }
 }
+
+
+/// An interval is a range of values between a minimum and maximum.
+/// # Fields
+/// * `min` - The minimum value of the interval.
+/// * `max` - The maximum value of the interval.
+/// # Examples
+/// ```
+/// use ray_tracing::ray::Interval;
+/// let interval = Interval { min: 1.0, max: 2.0 };
+/// assert_eq!(interval.min, 1.0);
+/// assert_eq!(interval.max, 2.0);
+/// ```
+pub struct Interval {
+    pub min: f64,
+    pub max: f64,
+}
+
+impl Interval {
+    pub fn contains(&self, t: f64) -> bool {
+        self.min <= t && t <= self.max
+    }
+
+    pub fn surrounds(&self, t: f64) -> bool {
+        self.min < t && t < self.max
+    }
+
+    pub fn size(&self) -> f64 {
+        self.max - self.min
+    }
+}
+
+static EMPTY: Interval = Interval { min: f64::INFINITY, max: f64::NEG_INFINITY };
+static UNIVERSE: Interval = Interval { min: f64::NEG_INFINITY, max: f64::INFINITY };
+
+
+#[cfg(test)]
+mod test_interval {
+    use super::*;
+
+    #[test]
+    fn test_interval_contains() {
+        let interval = Interval { min: 1.0, max: 2.0 };
+        assert_eq!(interval.contains(0.9), false);
+        assert_eq!(interval.contains(1.0), true);
+        assert_eq!(interval.contains(1.5), true);
+        assert_eq!(interval.contains(2.0), true);
+        assert_eq!(interval.contains(2.1), false);
+    }
+
+    #[test]
+    fn test_interval_surrounds() {
+        let interval = Interval { min: 1.0, max: 2.0 };
+        assert_eq!(interval.surrounds(0.9), false);
+        assert_eq!(interval.surrounds(1.0), false);
+        assert_eq!(interval.surrounds(1.5), true);
+        assert_eq!(interval.surrounds(2.0), false);
+        assert_eq!(interval.surrounds(2.1), false);
+    }
+
+    #[test]
+    fn test_interval_size() {
+        let interval = Interval { min: 1.0, max: 2.0 };
+        assert_eq!(interval.size(), 1.0);
+    }
+
+    #[test]
+    fn test_interval_empty() {
+        assert_eq!(EMPTY.min, f64::INFINITY);
+        assert_eq!(EMPTY.max, f64::NEG_INFINITY);
+    }
+
+    #[test]
+    fn test_interval_universe() {
+        assert_eq!(UNIVERSE.min, f64::NEG_INFINITY);
+        assert_eq!(UNIVERSE.max, f64::INFINITY);
+    }
+}
