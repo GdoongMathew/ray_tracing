@@ -30,21 +30,7 @@ fn main() {
     world.add(Box::new(Sphere::new(Vec3d::new(0.0, 0.0, -1.0), 0.5)));
     world.add(Box::new(Sphere::new(Vec3d::new(0.0, -100.5, -1.0), 100.0)));
 
-    let mut image = vec![Vec3d::new(0.0, 0.0, 0.0); (camera.resolution_width() * camera.resolution_height()) as usize];
-
-
-
-    for h in 0..camera.resolution_height() {
-        for w in 0..camera.resolution_width() {
-            let pixel_center = camera.pixel_center(w, h);
-
-            let ray_direction = pixel_center - camera.center;
-            let ray = Ray::new(camera.center, ray_direction);
-
-            let color = ray_color(&ray, &world);
-            image[(h * camera.resolution_width() + w) as usize] = color;
-        }
-    }
+    let image = camera.render(&world);
 
     write_image("output.png", &image, camera.resolution_width(), camera.resolution_height());
 }

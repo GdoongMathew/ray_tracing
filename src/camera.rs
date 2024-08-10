@@ -1,4 +1,6 @@
 use crate::vec3d::Vec3d;
+use crate::object::{HittableVec, Hittable, HitRecord};
+use crate::ray::{Ray, Interval};
 
 pub struct Camera {
     pub center: Vec3d,
@@ -78,6 +80,37 @@ impl Camera {
     /// * `h` - The height coordinate of the pixel.
     pub fn pixel_center(&self, w: i32, h: i32) -> Vec3d {
         self.pixel_upper_left() + self.pixel_delta_u() * w as f64 + self.pixel_delta_v() * h as f64
+    }
+
+    fn ray_color<H: Hittable>(ray: &Ray, world: &H) -> Vec3d {
+        let mut hit_record = HitRecord::new();
+        if world.hit(ray, &Interval { min: 0.0, max: f64::INFINITY }, &mut hit_record) {
+            return (hit_record.normal + Vec3d::new(1.0, 1.0, 1.0)) * 0.5;
+        }
+
+        let unit_direction = ray.direction.unit_vector();
+        let a = 0.5 * (unit_direction.y() + 1.0);
+        Vec3d::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3d::new(0.5, 0.7, 1.0) * a
+    }
+
+    pub fn render(&self, world: &HittableVec) -> Vec<Vec3d> {
+        let mut image = vec![
+            Vec3d::new(0.0, 0.0, 0.0);
+            (self.resolution_width() * self.resolution_height()) as usize
+        ];
+
+        for h in 0..self.resolution_height() {
+            for w in 0..self.resolution_width() {
+                let pixel_center = self.pixel_center(w, h);
+
+                let ray_direction = pixel_center - self.center;
+                let ray = Ray::new(self.center, ray_direction);
+
+                let color = Camera::ray_color(&ray, world);
+                image[(h * self.resolution_width() + w) as usize] = color;
+            }
+        }
+        image
     }
 }
 
