@@ -59,7 +59,7 @@ impl Hittable for HittableVec {
         let mut closest_so_far = t_max;
 
         for object in self.objects.iter() {
-            if object.hit(ray, t_min, t_max, &mut hit_record) {
+            if object.hit(ray, t_min, closest_so_far, &mut hit_record) {
                 hit_anything = true;
                 closest_so_far = hit_record.t;
                 rec.clone_from(&hit_record);
