@@ -99,8 +99,8 @@ impl Camera {
         if depth <= 0 {return Vec3d::new(0.0, 0.0, 0.0);}
 
         let mut hit_record = HitRecord::new();
-        if world.hit(ray, &Interval { min: 0.0, max: f64::INFINITY }, &mut hit_record) {
-            let direction = Vec3d::random_on_hemisphere(&hit_record.normal);
+        if world.hit(ray, &Interval { min: 0.0001, max: f64::INFINITY }, &mut hit_record) {
+            let direction = hit_record.normal + Vec3d::random().unit_vector();
             return Self::ray_color(&Ray::new(hit_record.point, direction), world, depth - 1) * 0.5;
         }
 
