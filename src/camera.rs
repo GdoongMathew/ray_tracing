@@ -3,6 +3,7 @@ use crate::object::{HittableVec, Hittable};
 use crate::ray::{Ray, Interval};
 use rand::Rng;
 use crate::object::material::Scatterable;
+use indicatif::ProgressBar;
 
 pub struct Camera {
     center: Vec3d,
@@ -96,7 +97,7 @@ impl Camera {
     }
 
     fn ray_color<H: Hittable>(ray: &Ray, world: &H, depth: i32) -> Vec3d {
-        if depth <= 0 {return Vec3d::new(0.0, 0.0, 0.0);}
+        if depth <= 0 { return Vec3d::new(0.0, 0.0, 0.0); }
 
         if let Some(hit_record) = world.hit(ray, &Interval { min: 0.0001, max: f64::INFINITY }) {
             let mut scatter = Ray::new(Vec3d::zero(), Vec3d::zero());
@@ -106,7 +107,7 @@ impl Camera {
                 color * Self::ray_color(&scatter, world, depth - 1)
             } else {
                 Vec3d::zero()
-            }
+            };
         }
 
         let unit_direction = ray.direction.unit_vector();
@@ -138,17 +139,22 @@ impl Camera {
             (self.resolution_width() * self.resolution_height()) as usize
         ];
 
+        let bar = ProgressBar::new(
+            self.resolution_height() as u64 * self.resolution_width() as u64
+        );
+
         for h in 0..self.resolution_height() {
             for w in 0..self.resolution_width() {
-
                 let mut color = Vec3d::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.sample_ray(w, h);
                     color += Self::ray_color(&ray, world, self.max_depth);
                 }
                 image[(h * self.resolution_width() + w) as usize] = color * self.samples_scale;
+                bar.inc(1);
             }
         }
+        bar.finish_and_clear();
         image
     }
 }
