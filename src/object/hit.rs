@@ -1,22 +1,26 @@
 use crate::vec3d::{Vec3d, dot};
 use crate::ray::{Ray, Interval};
+use super::material::Material;
 
 #[derive(Debug, Clone, Copy)]
-pub struct HitRecord {
+pub struct HitRecord<'m> {
     pub t: f64,
     pub point: Vec3d,
     pub normal: Vec3d,
     front_face: bool,
+
+    pub material: &'m Material,
 }
 
-impl HitRecord {
+impl <'m> HitRecord<'m> {
 
-    pub fn new() -> Self {
+    pub fn new(material: &'m Material) -> Self {
         Self {
             t: 0.0,
             point: Vec3d::zero(),
             normal: Vec3d::zero(),
             front_face: false,
+            material,
         }
     }
 
@@ -54,22 +58,15 @@ impl HittableVec {
 
 impl Hittable for HittableVec {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
-        let mut hit_record = HitRecord::new();
-        let mut hit_anything = false;
+        let mut hit_record: Option<HitRecord> = None;
         let mut closest_so_far = interval.max;
 
         for object in self.objects.iter() {
             if let Some(rec) = object.hit(ray, &Interval{min: interval.min, max: closest_so_far}) {
-                hit_anything = true;
                 closest_so_far = rec.t;
-                hit_record.clone_from(&rec);
+                hit_record = Some(rec);
             }
         }
-
-        if hit_anything {
-            Some(hit_record)
-        } else {
-            None
-        }
+        hit_record
     }
 }

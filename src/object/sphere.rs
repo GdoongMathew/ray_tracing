@@ -1,18 +1,20 @@
 use crate::ray::{Interval, Ray};
 use super::hit::*;
 use crate::vec3d::{Vec3d, dot};
+use crate::object::material::Material;
 
 pub struct Sphere {
     center: Vec3d,
     radius: f64,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3d, radius: f64) -> Self {
+    pub fn new(center: Vec3d, radius: f64, material: Material) -> Self {
         if radius <= 0.0 {
             panic!("Radius must be greater than 0, but was {} instead.", radius);
         }
-        Self { center, radius }
+        Self { center, radius, material }
     }
 }
 
@@ -40,7 +42,7 @@ impl Hittable for Sphere {
             }
         }
 
-        let mut rec = HitRecord::new();
+        let mut rec = HitRecord::new(&self.material);
         rec.t = root;
         rec.point = ray.at(rec.t);
         let outward_normal = (rec.point - self.center) / self.radius;
