@@ -7,7 +7,7 @@ pub struct HitRecord<'m> {
     pub t: f64,
     pub point: Vec3d,
     pub normal: Vec3d,
-    front_face: bool,
+    pub front_face: bool,
 
     pub material: &'m Material,
 }

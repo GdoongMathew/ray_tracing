@@ -97,14 +97,14 @@ impl Camera {
     }
 
     fn ray_color<H: Hittable>(ray: &Ray, world: &H, depth: i32) -> Vec3d {
-        if depth <= 0 { return Vec3d::new(0.0, 0.0, 0.0); }
+        if depth <= 0 { return Vec3d::zero(); }
 
         if let Some(hit_record) = world.hit(ray, &Interval { min: 0.0001, max: f64::INFINITY }) {
-            let mut scatter = Ray::new(Vec3d::zero(), Vec3d::zero());
-            let mut color = Vec3d::zero();
+            let mut scatter = Ray::default();
+            let mut attenuation = Vec3d::zero();
 
-            return if hit_record.material.scatter(ray, &hit_record, &mut color, &mut scatter) {
-                color * Self::ray_color(&scatter, world, depth - 1)
+            return if hit_record.material.scatter(ray, &hit_record, &mut attenuation, &mut scatter) {
+                attenuation * Self::ray_color(&scatter, world, depth - 1)
             } else {
                 Vec3d::zero()
             };
