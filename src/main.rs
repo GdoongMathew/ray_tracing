@@ -2,11 +2,12 @@ use ray_tracing::vec3d::Vec3d;
 use ray_tracing::camera::Camera;
 use ray_tracing::object::{Sphere, HittableVec};
 use ray_tracing::image::write_image;
+use ray_tracing::object::material::{Material, Lambertian, Metal};
 
 
 
 fn main() {
-    let camera = Camera::new(
+    let mut camera = Camera::new(
         Vec3d::new(0.0, 0.0, 0.0),
         1.0,
         16.0 / 9.0,
@@ -14,9 +15,19 @@ fn main() {
         2.0,
     );
 
+    camera.set_depth(50);
+
     let mut world = HittableVec::new();
-    world.add(Box::new(Sphere::new(Vec3d::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Vec3d::new(0.0, -100.5, -1.0), 100.0)));
+
+    let ground = Material::Lambertian(Lambertian::new(Vec3d::new(0.8, 0.8, 0.0)));
+    let center = Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5)));
+    let material_left = Material::Metal(Metal::new(Vec3d::new(0.8, 0.8, 0.8)));
+    let material_right = Material::Metal(Metal::new(Vec3d::new(0.8, 0.6, 0.2)));
+
+    world.add(Box::new(Sphere::new(Vec3d::new(0.0, -100.5, -1.0), 100.0, ground)));
+    world.add(Box::new(Sphere::new(Vec3d::new(0.0, 0.0, -1.2), 0.5, center)));
+    world.add(Box::new(Sphere::new(Vec3d::new(-1.0, 0.0, -1.0), 0.5, material_left)));
+    world.add(Box::new(Sphere::new(Vec3d::new(1.0, 0.0, -1.0), 0.5, material_right)));
 
     let image = camera.render(&world);
 
