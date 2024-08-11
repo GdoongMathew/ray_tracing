@@ -1,7 +1,7 @@
 use std::fmt::Formatter;
 use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign, Neg};
 use rand::Rng;
-use rand::distr::{Distribution, Standard, uniform::{SampleUniform, UniformSampler}};
+use rand::distr::{Distribution, Standard};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3d {
@@ -115,6 +115,12 @@ impl Vec3d {
         } else {
             -in_unit_sphere
         }
+    }
+
+    pub fn near_zero(&self) -> bool {
+        self.x().abs() < f64::EPSILON &&
+            self.y().abs() < f64::EPSILON &&
+            self.z().abs() < f64::EPSILON
     }
 }
 
