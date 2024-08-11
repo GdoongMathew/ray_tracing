@@ -96,11 +96,12 @@ impl Scatterable for Lambertian {
 #[derive(Debug, Clone, Copy)]
 pub struct Metal {
     albedo: Vec3d,
+    fuss: f64,
 }
 
 impl Metal {
-    pub fn new(albedo: Vec3d) -> Self {
-        Self { albedo }
+    pub fn new(albedo: Vec3d, fuss: f64) -> Self {
+        Self { albedo, fuss }
     }
 }
 
@@ -112,11 +113,16 @@ impl Scatterable for Metal {
         attenuation: &mut Vec3d,
         scattered: &mut Ray,
     ) -> bool {
-        let reflected = reflect(&ray_in.direction, &hit_record.normal);
+        let mut reflected = reflect(&ray_in.direction, &hit_record.normal);
+        reflected += reflected.unit_vector() + Vec3d::random().unit_vector() * self.fuss;
 
         scattered.clone_from(&Ray::new(hit_record.point, reflected));
         attenuation.clone_from(&self.albedo);
-        true
+        if dot(&scattered.direction, &hit_record.normal) > 0.0 {
+            true
+        } else {
+            false
+        }
     }
 }
 

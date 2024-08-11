@@ -21,8 +21,8 @@ fn main() {
 
     let ground = Material::Lambertian(Lambertian::new(Vec3d::new(0.8, 0.8, 0.0)));
     let center = Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5)));
-    let material_left = Material::Metal(Metal::new(Vec3d::new(0.8, 0.8, 0.8)));
-    let material_right = Material::Metal(Metal::new(Vec3d::new(0.8, 0.6, 0.2)));
+    let material_left = Material::Metal(Metal::new(Vec3d::new(0.8, 0.8, 0.8), 0.3));
+    let material_right = Material::Metal(Metal::new(Vec3d::new(0.8, 0.6, 0.2), 1.0));
 
     world.add(Box::new(Sphere::new(Vec3d::new(0.0, -100.5, -1.0), 100.0, ground)));
     world.add(Box::new(Sphere::new(Vec3d::new(0.0, 0.0, -1.2), 0.5, center)));
