@@ -14,10 +14,10 @@ pub struct HitRecord<'m> {
 
 impl <'m> HitRecord<'m> {
 
-    pub fn new(material: &'m Material) -> Self {
+    pub fn new(material: &'m Material, t: f64, point: Vec3d) -> Self {
         Self {
-            t: 0.0,
-            point: Vec3d::zero(),
+            t,
+            point,
             normal: Vec3d::zero(),
             front_face: false,
             material,
