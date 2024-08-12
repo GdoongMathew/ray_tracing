@@ -17,6 +17,7 @@ pub enum Material {
     Light(Light),
     Lambertian(Lambertian),
     Metal(Metal),
+    Dielectric(Dielectric),
 }
 
 impl Scatterable for Material {
@@ -31,6 +32,7 @@ impl Scatterable for Material {
             Material::Light(li) => li.scatter(ray_in, hit_record, attenuation, scattered),
             Material::Lambertian(l) => l.scatter(ray_in, hit_record, attenuation, scattered),
             Material::Metal(metal) => metal.scatter(ray_in, hit_record, attenuation, scattered),
+            Material::Dielectric(d) => d.scatter(ray_in, hit_record, attenuation, scattered),
         }
     }
 }
@@ -126,14 +128,121 @@ impl Scatterable for Metal {
     }
 }
 
-fn reflect(v_in: &Vec3d,  normal: &Vec3d) -> Vec3d {
+fn reflect(v_in: &Vec3d, normal: &Vec3d) -> Vec3d {
     *v_in - *normal * dot(v_in, normal) * 2.0
 }
 
 
+#[derive(Debug, Clone, Copy)]
+pub struct Dielectric {
+    refraction_index: f64,
+}
+
+
+impl Dielectric {
+    pub fn new(refraction_index: f64) -> Self {
+        Self { refraction_index }
+    }
+}
+
+
+impl Scatterable for Dielectric {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: &HitRecord,
+        attenuation: &mut Vec3d,
+        scattered: &mut Ray,
+    ) -> bool {
+        let ri = if hit_record.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
+
+        let unit_direction = ray_in.direction.unit_vector();
+        let refracted = refract(&unit_direction, &hit_record.normal, ri);
+
+        attenuation.clone_from(&Vec3d::new(1.0, 1.0, 1.0));
+        scattered.clone_from(&Ray::new(hit_record.point, refracted));
+        true
+    }
+}
+
+
 fn refract(v_in: &Vec3d, normal: &Vec3d, etai_over_etat: f64) -> Vec3d {
-    let cos_theta = dot(-v_in, normal).min(1.0);
+    let cos_theta = dot(&-*v_in, normal).min(1.0);
     let r_out_perp = (*v_in + *normal * cos_theta) * etai_over_etat;
     let r_out_parallel = *normal * -(1.0 - r_out_perp.length_squared()).abs().sqrt();
     r_out_perp + r_out_parallel
+}
+
+
+#[cfg(test)]
+mod test_scatter_fn {
+
+    use super::*;
+
+    #[test]
+    fn test_refract_perp_1() {
+        let v_in = Vec3d::new(0.0, -1.0, 0.0);
+        let normal = Vec3d::new(0.0, 1.0, 0.0);
+        let etai_over_etat = 1.0;
+
+        let expected = Vec3d::new(0.0, -1.0, 0.0); // No refraction, same vector
+        let result = refract(&v_in, &normal, etai_over_etat);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_refract_perp_2() {
+        let v_in = Vec3d::new(0.0, -1.0, 0.0);
+        let normal = Vec3d::new(0.0, 1.0, 0.0);
+        let etai_over_etat = 1.5;
+
+        let expected = Vec3d::new(0.0, -1.0, 0.0); // No refraction, same vector
+        let result = refract(&v_in, &normal, etai_over_etat);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_refract_perp_3() {
+        let v_in = Vec3d::new(0.0, -1.0, 0.0);
+        let normal = Vec3d::new(0.0, 1.0, 0.0);
+        let etai_over_etat = 0.5;
+
+        let expected = Vec3d::new(0.0, -1.0, 0.0); // No refraction, same vector
+        let result = refract(&v_in, &normal, etai_over_etat);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_refract_1() {
+        let v_in = Vec3d::new(1.0, 1.0, 0.0);
+        let normal = Vec3d::new(-1.0, 0.0, 0.0);
+        let etai_over_etat = 1.0;
+
+        let expected = Vec3d::new(0.0, 1.0, 0.0); // Corrected expected result
+        let result = refract(&v_in, &normal, etai_over_etat);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_refract_2() {
+        let v_in = Vec3d::new(1.0, 1.0, 0.0);
+        let normal = Vec3d::new(-1.0, 0.0, 0.0);
+        let etai_over_etat = 0.5;
+
+        let expected = Vec3d::new(0.8660254037844386, 0.5, 0.0); // Corrected expected result
+        let result = refract(&v_in, &normal, etai_over_etat);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_refract_3() {
+        let v_in = Vec3d::new(0.0, -1.0, 0.0);
+        let normal = Vec3d::new(0.0, 1.0, 0.0);
+        let etai_over_etat = 1.5;
+
+        let expected = Vec3d::new(0.0, -1.0, 0.0); // Corrected expected result
+        let result = refract(&v_in, &normal, etai_over_etat);
+        assert_eq!(result, expected);
+    }
+
 }
