@@ -179,6 +179,37 @@ mod test_scatter_fn {
 
     use super::*;
 
+
+    #[test]
+    fn test_reflect_output_1() {
+        let v_in = Vec3d::new(1.0, 1.0, 0.0);
+        let normal = Vec3d::new(-1.0, 0.0, 0.0);
+        let expected = Vec3d::new(-1.0, 1.0, 0.0);
+        let result = reflect(&v_in, &normal);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_reflect_output_2() {
+        let v_in = Vec3d::new(1.0, 1.0, 0.0);
+        let normal = Vec3d::new(0.0, 1.0, 0.0);
+        let expected = Vec3d::new(1.0, -1.0, 0.0);
+        let result = reflect(&v_in, &normal);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_reflect_output_3() {
+        let v_in = Vec3d::new(1.0, 1.0, 0.0);
+        let normal = Vec3d::new(-1.0, -1.0, 0.0);
+        let expected = Vec3d::new(-1.0, -1.0, 0.0);
+        let result = reflect(&v_in, &normal.unit_vector());
+        assert!(result.x() - expected.x() < f32::EPSILON as f64);
+        assert!(result.y() - expected.y() < f32::EPSILON as f64);
+        assert_eq!(result.z(), expected.z());
+    }
+
+
     #[test]
     fn test_refract_perp_1() {
         let v_in = Vec3d::new(0.0, -1.0, 0.0);
