@@ -48,3 +48,64 @@ impl Hittable for Sphere {
         Some(rec)
     }
 }
+
+
+#[cfg(test)]
+mod test_hittable {
+    use super::*;
+
+    use super::super::material::*;
+
+    #[test]
+    fn test_sphere_hit() {
+        let sphere = Sphere::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            2.0,
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+        let ray = Ray::new(
+            Vec3d::new(0.0, 0.0, -5.0),
+            Vec3d::new(0.0, 0.0, 1.0),
+        );
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = sphere.hit(&ray, &interval).unwrap();
+
+        assert_eq!(hit_record.t, 3.0);
+        assert_eq!(hit_record.point, Vec3d::new(0.0, 0.0, -2.0));
+        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn test_sphere_no_hit_1() {
+        let sphere = Sphere::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            2.0,
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+        let ray = Ray::new(
+            Vec3d::new(0.0, 0.0, -5.0),
+            Vec3d::new(0.0, 0.0, -1.0),
+        );
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = sphere.hit(&ray, &interval);
+
+        assert!(hit_record.is_none());
+    }
+
+    #[test]
+    fn test_sphere_no_hit_2() {
+        let sphere = Sphere::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            2.0,
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+        let ray = Ray::new(
+            Vec3d::new(2.0, 2.0, -1.0),
+            Vec3d::new(2.0, 0.0, -1.0),
+        );
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = sphere.hit(&ray, &interval);
+
+        assert!(hit_record.is_none());
+    }
+}
