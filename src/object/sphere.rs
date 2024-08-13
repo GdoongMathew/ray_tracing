@@ -34,9 +34,9 @@ impl Hittable for Sphere {
         let sqrt_disc = discriminant.sqrt();
 
         // Find the nearest root that lies in the acceptable range.
-        let root = (h - sqrt_disc) / a;
+        let mut root = (h - sqrt_disc) / a;
         if !(interval.surrounds(root)) {
-            let root = (h + sqrt_disc) / a;
+            root = (h + sqrt_disc) / a;
             if !(interval.surrounds(root)) {
                 return None;
             }
@@ -57,7 +57,7 @@ mod test_hittable {
     use super::super::material::*;
 
     #[test]
-    fn test_sphere_hit() {
+    fn test_sphere_outside_hit() {
         let sphere = Sphere::new(
             Vec3d::new(0.0, 0.0, 0.0),
             2.0,
@@ -73,6 +73,29 @@ mod test_hittable {
         assert_eq!(hit_record.t, 3.0);
         assert_eq!(hit_record.point, Vec3d::new(0.0, 0.0, -2.0));
         assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_record.front_face, true);
+    }
+
+    #[test]
+    fn test_sphere_inside_hit() {
+        {
+        let sphere = Sphere::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            2.0,
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+        let ray = Ray::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            Vec3d::new(0.0, 0.0, 1.0),
+        );
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = sphere.hit(&ray, &interval).unwrap();
+
+        assert_eq!(hit_record.t, 2.0);
+        assert_eq!(hit_record.point, Vec3d::new(0.0, 0.0, 2.0));
+        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_record.front_face, false);
+    }
     }
 
     #[test]
