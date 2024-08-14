@@ -178,7 +178,7 @@ fn refract(v_in: &Vec3d, normal: &Vec3d, etai_over_etat: f64) -> Vec3d {
 mod test_scatter_fn {
 
     use super::*;
-
+    use assert_approx_eq::assert_approx_eq;
 
     #[test]
     fn test_reflect_output_1() {
@@ -204,8 +204,8 @@ mod test_scatter_fn {
         let normal = Vec3d::new(-1.0, -1.0, 0.0);
         let expected = Vec3d::new(-1.0, -1.0, 0.0);
         let result = reflect(&v_in, &normal.unit_vector());
-        assert!(result.x() - expected.x() < f32::EPSILON as f64);
-        assert!(result.y() - expected.y() < f32::EPSILON as f64);
+        assert_approx_eq!(result.x(), expected.x(), f32::EPSILON as f64);
+        assert_approx_eq!(result.y(), expected.y(), f32::EPSILON as f64);
         assert_eq!(result.z(), expected.z());
     }
 
