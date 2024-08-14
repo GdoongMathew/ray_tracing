@@ -1,3 +1,4 @@
+use rand::random;
 use crate::vec3d::{Vec3d, dot};
 use crate::ray::Ray;
 use crate::object::hit::HitRecord;
@@ -161,7 +162,7 @@ impl Scatterable for Dielectric {
 
         let cannot_refract = ri * sin_theta > 1.0;
 
-        let direction = if cannot_refract {
+        let direction = if cannot_refract || reflectance(cos_theta, ri) > random() {
             reflect(&unit_direction, &hit_record.normal)
         } else {
             refract(&unit_direction, &hit_record.normal, ri)
@@ -179,6 +180,14 @@ fn refract(v_in: &Vec3d, normal: &Vec3d, etai_over_etat: f64) -> Vec3d {
     let r_out_parallel = *normal * -1.0 * (1.0 - r_out_perp.length_squared()).abs().sqrt();
     r_out_perp + r_out_parallel
 }
+
+fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
+    // use Schlick's approximation for reflectance
+    let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
+    r0 *= r0;
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+}
+
 
 
 #[cfg(test)]
