@@ -39,7 +39,7 @@ impl Vec3d {
     /// let vec = Vec3d::zero();
     /// assert_eq!(vec, Vec3d::new(0.0, 0.0, 0.0));
     /// ```
-    pub fn zero() ->  Self {
+    pub fn zero() -> Self {
         Self {
             vector: (0.0, 0.0, 0.0)
         }
@@ -134,7 +134,7 @@ impl Vec3d {
 /// let mut rng = rand::thread_rng();
 /// let vec: Vec3d = rng.random();
 /// ```
-impl Distribution<Vec3d> for Standard{
+impl Distribution<Vec3d> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec3d {
         let (x, y, z) = rng.random::<(f64, f64, f64)>();
         Vec3d::new(x, y, z)
@@ -214,11 +214,10 @@ impl Neg for Vec3d {
     /// assert_eq!(result, Vec3d::new(-1.0, -2.0, -3.0));
     /// ```
     fn neg(self) -> Self::Output {
-            Self {
-                vector: (-self.x(), -self.y(), -self.z())
-            }
+        Self {
+            vector: (-self.x(), -self.y(), -self.z())
         }
-
+    }
 }
 
 
@@ -448,7 +447,6 @@ impl MulAssign<f64> for Vec3d {
 impl Div<Vec3d> for Vec3d {
     type Output = Self;
     fn div(self, rhs: Self) -> Self::Output {
-
         Self {
             vector: (self.x() / rhs.x(), self.y() / rhs.y(), self.z() / rhs.z())
         }
@@ -691,5 +689,40 @@ mod vec3d_tests {
         let mut vec = Vec3d::new(1.0, 2.0, 3.0);
         vec /= 2.0;
         assert_eq!(vec, Vec3d::new(0.5, 1.0, 1.5));
+    }
+
+    #[test]
+    fn test_vec3d_random_fn() {
+        let vec = Vec3d::random();
+        assert_eq!(vec.x() >= 0.0 && vec.x() <= 1.0, true);
+        assert_eq!(vec.y() >= 0.0 && vec.y() <= 1.0, true);
+        assert_eq!(vec.z() >= 0.0 && vec.z() <= 1.0, true);
+    }
+
+    #[test]
+    fn test_random_vec3d() {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let vec: Vec3d = rng.random();
+
+        assert_eq!(vec.x() >= 0.0 && vec.x() <= 1.0, true);
+        assert_eq!(vec.y() >= 0.0 && vec.y() <= 1.0, true);
+        assert_eq!(vec.z() >= 0.0 && vec.z() <= 1.0, true);
+    }
+
+    #[test]
+    fn test_vec3d_gen_range_0_1() {
+        let vec = Vec3d::gen_range(0.0, 1.0);
+        assert_eq!(vec.x() >= 0.0 && vec.x() <= 1.0, true);
+        assert_eq!(vec.y() >= 0.0 && vec.y() <= 1.0, true);
+        assert_eq!(vec.z() >= 0.0 && vec.z() <= 1.0, true);
+    }
+
+    #[test]
+    fn test_vec3d_gen_range_5_10() {
+        let vec = Vec3d::gen_range(5.0, 10.0);
+        assert_eq!(vec.x() >= 5.0 && vec.x() <= 10.0, true);
+        assert_eq!(vec.y() >= 5.0 && vec.y() <= 10.0, true);
+        assert_eq!(vec.z() >= 5.0 && vec.z() <= 10.0, true);
     }
 }
