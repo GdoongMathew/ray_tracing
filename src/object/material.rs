@@ -169,7 +169,7 @@ impl Scatterable for Dielectric {
 fn refract(v_in: &Vec3d, normal: &Vec3d, etai_over_etat: f64) -> Vec3d {
     let cos_theta = dot(&-*v_in, normal).min(1.0);
     let r_out_perp = (*v_in + *normal * cos_theta) * etai_over_etat;
-    let r_out_parallel = *normal * -(1.0 - r_out_perp.length_squared()).abs().sqrt();
+    let r_out_parallel = *normal * -1.0 * (1.0 - r_out_perp.length_squared()).abs().sqrt();
     r_out_perp + r_out_parallel
 }
 
