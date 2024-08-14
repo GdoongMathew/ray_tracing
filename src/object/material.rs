@@ -156,10 +156,18 @@ impl Scatterable for Dielectric {
         let ri = if hit_record.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
 
         let unit_direction = ray_in.direction.unit_vector();
-        let refracted = refract(&unit_direction, &hit_record.normal, ri);
+        let cos_theta = dot(&-unit_direction, &hit_record.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
+        let cannot_refract = ri * sin_theta > 1.0;
+
+        let direction = if cannot_refract {
+            reflect(&unit_direction, &hit_record.normal)
+        } else {
+            refract(&unit_direction, &hit_record.normal, ri)
+        };
         attenuation.clone_from(&Vec3d::new(1.0, 1.0, 1.0));
-        scattered.clone_from(&Ray::new(hit_record.point, refracted));
+        scattered.clone_from(&Ray::new(hit_record.point, direction));
         true
     }
 }
