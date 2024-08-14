@@ -103,6 +103,9 @@ pub struct Metal {
 
 impl Metal {
     pub fn new(albedo: Vec3d, fuss: f64) -> Self {
+        if fuss > 1.0 {
+            panic!("Fuss must be less than 1.0, get {} instead.", fuss);
+        }
         Self { albedo, fuss }
     }
 }
@@ -116,15 +119,11 @@ impl Scatterable for Metal {
         scattered: &mut Ray,
     ) -> bool {
         let mut reflected = reflect(&ray_in.direction, &hit_record.normal);
-        reflected += reflected.unit_vector() + Vec3d::random().unit_vector() * self.fuss;
+        reflected = reflected.unit_vector() + Vec3d::random().unit_vector() * self.fuss;
 
         scattered.clone_from(&Ray::new(hit_record.point, reflected));
         attenuation.clone_from(&self.albedo);
-        if dot(&scattered.direction, &hit_record.normal) > 0.0 {
-            true
-        } else {
-            false
-        }
+        dot(&scattered.direction, &hit_record.normal) > 0.0
     }
 }
 
