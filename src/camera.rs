@@ -1,4 +1,4 @@
-use crate::vec3d::Vec3d;
+use crate::vec3d::{Vec3d, cross};
 use crate::object::{HittableVec, Hittable};
 use crate::ray::{Ray, Interval};
 use rand::Rng;
@@ -7,7 +7,6 @@ use indicatif::ProgressBar;
 
 pub struct Camera {
     center: Vec3d,
-    focal_length: f64,
     aspect_ratio: f64,
 
     resolution: (i32, i32),
@@ -22,22 +21,45 @@ pub struct Camera {
     max_depth: i32,
 
     v_fov: f64, // Vertical field of view in degrees.
+
+    look_from: Vec3d,   // Point camera is looking from
+    look_at: Vec3d,     // Point camera is looking at
+    v_up: Vec3d,        // Camera-relative up vector
+
+    defocus_angle: f64,
+    defocus_radius: f64,
+    focus_dist: f64,
+
 }
 
-fn degrees_to_radian(degrees: f64) -> f64 {
-    degrees * std::f64::consts::PI / 180.0
+fn random_in_unit_disk() -> Vec3d {
+    let mut rng = rand::thread_rng();
+    loop {
+        let p = Vec3d::new(
+            rng.gen_range(-1.0..1.0),
+            rng.gen_range(-1.0..1.0),
+            0.0,
+        );
+        if p.length_squared() < 1.0 {
+            return p;
+        }
+    }
 }
 
 
 impl Camera {
     pub fn new() -> Self {
         let center = Vec3d::zero();
-        let focal_length = 1.0;
         let aspect_ratio = 16.0 / 9.0;
         let image_width = 1080;
-        let v_fov = 90.0;
+        let v_fov: f64 = 90.0;
 
-        let theta = degrees_to_radian(v_fov);
+        let look_from = Vec3d::new(0.0, 0.0, 0.0);
+        let look_at = Vec3d::new(0.0, 0.0, -1.0);
+        let v_up = Vec3d::new(0.0, 1.0, 0.0);
+        let focal_length = (look_from - look_at).length();
+
+        let theta = v_fov.to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h * focal_length;
 
@@ -49,7 +71,6 @@ impl Camera {
 
         Self {
             center,
-            focal_length,
             aspect_ratio,
             resolution: (image_width, image_height),
             viewport_dims: (viewport_width, viewport_height),
@@ -59,37 +80,71 @@ impl Camera {
             samples_scale: 1.0,
             max_depth: 10,
             v_fov,
+            look_from,
+            look_at,
+            v_up,
+            defocus_angle: 0.0,
+            defocus_radius: 0.0,
+            focus_dist: 10.0,
         }
     }
 
     fn initialize(&mut self) -> () {
-        let theta = degrees_to_radian(self.v_fov);
-        let h = (theta / 2.0).tan();
-        let viewport_height = 2.0 * h * self.focal_length;
+        self.update_resolution_height();
+        self.set_center(self.look_from);
 
-        let image_height: i32 = (self.resolution_width() as f64 / self.aspect_ratio) as i32;
-        let viewport_width = viewport_height * (self.resolution_width() as f64 / image_height as f64);
-
-        self.resolution = (self.resolution_width(), image_height);
+        let h = (self.theta() / 2.0).tan();
+        let viewport_height = 2.0 * h * self.focus_dist;
+        let viewport_width = viewport_height * (self.resolution_width() as f64 / self.resolution_height() as f64);
         self.viewport_dims = (viewport_width, viewport_height);
-        self.viewport_u = Vec3d::new(viewport_width, 0.0, 0.0);
-        self.viewport_v = Vec3d::new(0.0, -viewport_height, 0.0);
+
+        self.viewport_u = self.u() * self.viewport_width();
+        self.viewport_v = -self.v() * self.viewport_height();
+
+        self.defocus_radius = (self.defocus_angle / 2.0).to_radians().tan() * self.focus_dist;
     }
 
-    pub fn set_center(&mut self, center: Vec3d) -> () { self.center = center; }
+    fn theta(&self) -> f64 { self.v_fov.to_radians() }
+
+    fn w(&self) -> Vec3d { (self.look_from - self.look_at).unit_vector() }
+
+    fn u(&self) -> Vec3d { cross(&self.v_up, &self.w()).unit_vector() }
+
+    fn v(&self) -> Vec3d { cross(&self.w(), &self.u()) }
+
+    pub fn set_look_from(&mut self, look_from: Vec3d) -> () { self.look_from = look_from; }
+    pub fn set_look_at(&mut self, look_at: Vec3d) -> () { self.look_at = look_at; }
+    pub fn set_v_up(&mut self, v_up: Vec3d) -> () { self.v_up = v_up; }
+
+    pub fn focal_length(&self) -> f64 { (self.look_from - self.look_at).length() }
+
+    fn set_center(&mut self, center: Vec3d) -> () { self.center = center; }
 
     pub fn set_samples_per_pixel(&mut self, samples_per_pixel: i32) -> () {
         self.samples_per_pixel = samples_per_pixel;
         self.samples_scale = 1.0 / (samples_per_pixel as f64);
     }
 
-    pub fn set_aspect_ratio(&mut self, aspect_ratio: f64) -> () { self.aspect_ratio = aspect_ratio; }
-
-    pub fn set_focal_length(&mut self, focal_length: f64) -> () { self.focal_length = focal_length; }
-
     pub fn set_v_fov(&mut self, v_fov: f64) -> () { self.v_fov = v_fov; }
 
     pub fn set_depth(&mut self, max_depth: i32) -> () { self.max_depth = max_depth; }
+
+    pub fn set_aspect_ratio(&mut self, aspect_ratio: f64) -> () { self.aspect_ratio = aspect_ratio; }
+
+    pub fn set_resolution_width(&mut self, width: i32) -> () { self.resolution.0 = width; }
+
+    fn update_resolution_height(&mut self) -> () {
+        let height = (self.resolution_width() as f64 / self.aspect_ratio) as i32;
+        self.resolution.1 = height.max(1);
+    }
+
+    pub fn set_defocus_angle(&mut self, angle: f64) -> () { self.defocus_angle = angle; }
+
+    pub fn set_focus_dist(&mut self, focus_dist: f64) -> () { self.focus_dist = focus_dist; }
+
+    fn defocus_disk_u(&self) -> Vec3d { self.u() * self.defocus_radius }
+
+    fn defocus_disk_v(&self) -> Vec3d { self.v() * self.defocus_radius }
 
     pub fn resolution_width(&self) -> i32 { self.resolution.0 }
 
@@ -101,16 +156,16 @@ impl Camera {
 
     pub fn pixel_delta_u(&self) -> Vec3d {
         // The pixel delta in the u (x) direction.
-        self.viewport_u / self.resolution.0 as f64
+        self.viewport_u / self.resolution_width() as f64
     }
 
     pub fn pixel_delta_v(&self) -> Vec3d {
         // The pixel delta in the v (y) direction.
-        self.viewport_v / self.resolution.1 as f64
+        self.viewport_v / self.resolution_height() as f64
     }
 
     pub fn viewport_upper_left(&self) -> Vec3d {
-        self.center - self.viewport_u / 2.0 - self.viewport_v / 2.0 - Vec3d::new(0.0, 0.0, self.focal_length)
+        self.center - self.w() * self.focus_dist - self.viewport_u / 2.0 - self.viewport_v / 2.0
     }
 
     pub fn pixel_upper_left(&self) -> Vec3d {
@@ -158,8 +213,19 @@ impl Camera {
             j as f64 + offset_j,
         );
 
-        let direction = pixel_sample - self.center;
-        Ray::new(self.center, direction)
+        let ray_origin = if self.defocus_angle <= 0.0 {
+            self.center
+        } else {
+            self.defocus_disk_sample()
+        };
+
+        let direction = pixel_sample - ray_origin;
+        Ray::new(ray_origin, direction)
+    }
+
+    fn defocus_disk_sample(&self) -> Vec3d {
+        let p = random_in_unit_disk();
+        self.center + self.defocus_disk_u() * p.x() + self.defocus_disk_v() * p.y()
     }
 
     pub fn render(&mut self, world: &HittableVec) -> Vec<Vec3d> {
