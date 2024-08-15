@@ -20,24 +20,34 @@ pub struct Camera {
     samples_scale: f64,
 
     max_depth: i32,
+
+    v_fov: f64, // Vertical field of view in degrees.
+}
+
+fn degrees_to_radian(degrees: f64) -> f64 {
+    degrees * std::f64::consts::PI / 180.0
 }
 
 
 impl Camera {
-    pub fn new(
-        center: Vec3d,
-        focal_length: f64,
-        aspect_ratio: f64,
-        image_width: i32,
-        viewport_height: f64,
-    ) -> Self {
+    pub fn new() -> Self {
+        let center = Vec3d::zero();
+        let focal_length = 1.0;
+        let aspect_ratio = 16.0 / 9.0;
+        let image_width = 1080;
+        let v_fov = 90.0;
+
+        let theta = degrees_to_radian(v_fov);
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * focal_length;
+
         let image_height: i32 = (image_width as f64 / aspect_ratio) as i32;
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
 
         let viewport_u = Vec3d::new(viewport_width, 0.0, 0.0);
         let viewport_v = Vec3d::new(0.0, -viewport_height, 0.0);
 
-        let mut ret = Self {
+        Self {
             center,
             focal_length,
             aspect_ratio,
@@ -48,17 +58,36 @@ impl Camera {
             samples_per_pixel: 1,
             samples_scale: 1.0,
             max_depth: 10,
-        };
-
-        ret.set_samples_per_pixel(10);
-        ret
+            v_fov,
+        }
     }
+
+    fn initialize(&mut self) -> () {
+        let theta = degrees_to_radian(self.v_fov);
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * self.focal_length;
+
+        let image_height: i32 = (self.resolution_width() as f64 / self.aspect_ratio) as i32;
+        let viewport_width = viewport_height * (self.resolution_width() as f64 / image_height as f64);
+
+        self.resolution = (self.resolution_width(), image_height);
+        self.viewport_dims = (viewport_width, viewport_height);
+        self.viewport_u = Vec3d::new(viewport_width, 0.0, 0.0);
+        self.viewport_v = Vec3d::new(0.0, -viewport_height, 0.0);
+    }
+
     pub fn set_center(&mut self, center: Vec3d) -> () { self.center = center; }
 
     pub fn set_samples_per_pixel(&mut self, samples_per_pixel: i32) -> () {
         self.samples_per_pixel = samples_per_pixel;
         self.samples_scale = 1.0 / (samples_per_pixel as f64);
     }
+
+    pub fn set_aspect_ratio(&mut self, aspect_ratio: f64) -> () { self.aspect_ratio = aspect_ratio; }
+
+    pub fn set_focal_length(&mut self, focal_length: f64) -> () { self.focal_length = focal_length; }
+
+    pub fn set_v_fov(&mut self, v_fov: f64) -> () { self.v_fov = v_fov; }
 
     pub fn set_depth(&mut self, max_depth: i32) -> () { self.max_depth = max_depth; }
 
@@ -133,7 +162,9 @@ impl Camera {
         Ray::new(self.center, direction)
     }
 
-    pub fn render(&self, world: &HittableVec) -> Vec<Vec3d> {
+    pub fn render(&mut self, world: &HittableVec) -> Vec<Vec3d> {
+        self.initialize();
+
         let mut image = vec![
             Vec3d::new(0.0, 0.0, 0.0);
             (self.resolution_width() * self.resolution_height()) as usize
