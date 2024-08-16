@@ -7,30 +7,58 @@ use ray_tracing::object::material::{Material, Lambertian, Metal, Dielectric};
 
 
 fn main() {
-    let mut camera = Camera::new(
-        Vec3d::new(0.0, 0.0, 0.0),
-        1.0,
-        16.0 / 9.0,
-        1080,
-        2.0,
-    );
 
-    camera.set_depth(50);
+    let mut camera = Camera::new();
+
+    camera.set_depth(80);
+    camera.set_aspect_ratio(16.0 / 9.0);
+    camera.set_resolution_width(1200);
+    camera.set_samples_per_pixel(500);
+    camera.set_v_fov(20.0);
+
+    camera.set_look_from(Vec3d::new(13.0, 2.0, 3.0));
+    camera.set_look_at(Vec3d::new(0.0, 0.0, 0.0));
+    camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
+
+    camera.set_defocus_angle(0.6);
+    camera.set_focus_dist(10.0);
 
     let mut world = HittableVec::new();
 
-    let ground = Material::Lambertian(Lambertian::new(Vec3d::new(0.8, 0.8, 0.0)));
-    let center = Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5)));
-    let material_left = Material::Dielectric(Dielectric::new(1.5));
-    let material_bobble = Material::Dielectric(Dielectric::new(1.0 / 1.5));
-    // let material_left = Material::Metal(Metal::new(Vec3d::new(0.8, 0.8, 0.8), 0.3));
-    let material_right = Material::Metal(Metal::new(Vec3d::new(0.8, 0.6, 0.2), 1.0));
+    let ground = Material::Lambertian(Lambertian::new(Vec3d::new(0.5, 0.5, 0.5)));
+    world.add(Box::new(Sphere::new(Vec3d::new(0.0, -1000.0, 0.0), 1000.0, ground)));
 
-    world.add(Box::new(Sphere::new(Vec3d::new(0.0, -100.5, -1.0), 100.0, ground)));
-    world.add(Box::new(Sphere::new(Vec3d::new(0.0, 0.0, -1.2), 0.5, center)));
-    world.add(Box::new(Sphere::new(Vec3d::new(-1.0, 0.0, -1.0), 0.5, material_left)));
-    world.add(Box::new(Sphere::new(Vec3d::new(-1.0, 0.0, -1.0), 0.4, material_bobble)));
-    world.add(Box::new(Sphere::new(Vec3d::new(1.0, 0.0, -1.0), 0.5, material_right)));
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rand::random::<f64>();
+            let center = Vec3d::new(a as f64 + 0.9 * rand::random::<f64>(), 0.2, b as f64 + 0.9 * rand::random::<f64>());
+            if (center - Vec3d::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                let sphere_material: Material;
+                if choose_mat < 0.8 {
+                    let albedo = Vec3d::random() * Vec3d::random();
+                    sphere_material = Material::Lambertian(Lambertian::new(albedo));
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                } else if choose_mat < 0.95 {
+                    let albedo = Vec3d::gen_range(0.5, 1.0);
+                    let fuzz = rand::random::<f64>() * 0.5;
+                    sphere_material = Material::Metal(Metal::new(albedo, fuzz));
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                } else {
+                    sphere_material = Material::Dielectric(Dielectric::new(1.5));
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                }
+            }
+        }
+    }
+
+    let material1 = Material::Dielectric(Dielectric::new(1.5));
+    world.add(Box::new(Sphere::new(Vec3d::new(0.0, 1.0, 0.0), 1.0, material1)));
+
+    let material2 = Material::Lambertian(Lambertian::new(Vec3d::new(0.4, 0.2, 0.1)));
+    world.add(Box::new(Sphere::new(Vec3d::new(-4.0, 1.0, 0.0), 1.0, material2)));
+
+    let material3 = Material::Metal(Metal::new(Vec3d::new(0.7, 0.6, 0.5), 0.0));
+    world.add(Box::new(Sphere::new(Vec3d::new(4.0, 1.0, 0.0), 1.0, material3)));
 
     let image = camera.render(&world);
 
