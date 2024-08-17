@@ -116,6 +116,13 @@ impl Interval {
         if t < self.min { self.min } else if t > self.max { self.max } else { t }
     }
 
+    /// Returns the size of the interval.
+    /// # Examples
+    /// ```
+    /// use ray_tracing::ray::Interval;
+    /// let interval = Interval { min: 1.0, max: 2.0 };
+    /// assert_eq!(interval.size(), 1.0);
+    /// ```
     pub fn size(&self) -> f64 {
         self.max - self.min
     }
