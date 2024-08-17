@@ -225,7 +225,8 @@ impl Camera {
         };
 
         let direction = pixel_sample - ray_origin;
-        Ray::new(ray_origin, direction, 0.0)
+
+        Ray::new(ray_origin, direction, rng.random::<f64>())
     }
 
     fn defocus_disk_sample(&self) -> Vec3d {

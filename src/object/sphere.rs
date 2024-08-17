@@ -7,20 +7,64 @@ pub struct Sphere {
     center: Vec3d,
     radius: f64,
     material: Material,
+
+    center_vec: Vec3d,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3d, radius: f64, material: Material) -> Self {
+    pub fn static_sphere(
+        center: Vec3d,
+        radius: f64,
+        material: Material,
+    ) -> Self {
+        Self::new(center, center, radius, material)
+    }
+
+    pub fn moving_sphere(
+        center: Vec3d,
+        center1: Vec3d,
+        radius: f64,
+        material: Material,
+    ) -> Self {
+        Self::new(center, center1, radius, material)
+    }
+
+    fn new(
+        center: Vec3d,
+        center1: Vec3d,
+        radius: f64,
+        material: Material,
+    ) -> Self {
         if radius <= 0.0 {
             panic!("Radius must be greater than 0, but was {} instead.", radius);
         }
-        Self { center, radius, material }
+        Self {
+            center,
+            radius,
+            material,
+            center_vec: center1 - center,
+        }
+    }
+
+    pub fn is_moving(&self) -> bool {
+        self.center_vec.x() != 0.0 || self.center_vec.y() != 0.0 || self.center_vec.z() != 0.0
+    }
+
+    pub fn sphere_center(&self, time: f64) -> Vec3d {
+        // If the sphere is not moving, the center is the same.
+        self.center + self.center_vec * time
     }
 }
 
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
-        let oc = self.center - ray.origin;
+
+        let center = if self.is_moving() {
+            self.sphere_center(ray.time)
+        } else {
+            self.center
+        };
+        let oc = center - ray.origin;
 
         let a = ray.direction.length_squared();
         let h = dot(&ray.direction, &oc);
@@ -58,7 +102,7 @@ mod test_hittable {
 
     #[test]
     fn test_sphere_outside_hit() {
-        let sphere = Sphere::new(
+        let sphere = Sphere::static_sphere(
             Vec3d::new(0.0, 0.0, 0.0),
             2.0,
             Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
@@ -80,29 +124,29 @@ mod test_hittable {
     #[test]
     fn test_sphere_inside_hit() {
         {
-        let sphere = Sphere::new(
-            Vec3d::new(0.0, 0.0, 0.0),
-            2.0,
-            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
-        );
-        let ray = Ray::new(
-            Vec3d::new(0.0, 0.0, 0.0),
-            Vec3d::new(0.0, 0.0, 1.0),
-            0.0,
-        );
-        let interval = Interval { min: 0.0, max: f64::INFINITY };
-        let hit_record = sphere.hit(&ray, &interval).unwrap();
+            let sphere = Sphere::static_sphere(
+                Vec3d::new(0.0, 0.0, 0.0),
+                2.0,
+                Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+            );
+            let ray = Ray::new(
+                Vec3d::new(0.0, 0.0, 0.0),
+                Vec3d::new(0.0, 0.0, 1.0),
+                0.0,
+            );
+            let interval = Interval { min: 0.0, max: f64::INFINITY };
+            let hit_record = sphere.hit(&ray, &interval).unwrap();
 
-        assert_eq!(hit_record.t, 2.0);
-        assert_eq!(hit_record.point, Vec3d::new(0.0, 0.0, 2.0));
-        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
-        assert_eq!(hit_record.front_face, false);
-    }
+            assert_eq!(hit_record.t, 2.0);
+            assert_eq!(hit_record.point, Vec3d::new(0.0, 0.0, 2.0));
+            assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
+            assert_eq!(hit_record.front_face, false);
+        }
     }
 
     #[test]
     fn test_sphere_no_hit_1() {
-        let sphere = Sphere::new(
+        let sphere = Sphere::static_sphere(
             Vec3d::new(0.0, 0.0, 0.0),
             2.0,
             Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
@@ -120,7 +164,7 @@ mod test_hittable {
 
     #[test]
     fn test_sphere_no_hit_2() {
-        let sphere = Sphere::new(
+        let sphere = Sphere::static_sphere(
             Vec3d::new(0.0, 0.0, 0.0),
             2.0,
             Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),

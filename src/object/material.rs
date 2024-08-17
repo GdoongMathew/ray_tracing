@@ -89,7 +89,7 @@ impl Scatterable for Lambertian {
             scatter_direction.clone_from(&hit_record.normal);
         }
 
-        scattered.clone_from(&Ray::new(hit_record.point, scatter_direction, 0.0));
+        scattered.clone_from(&Ray::new(hit_record.point, scatter_direction, ray_in.time));
         attenuation.clone_from(&self.albedo);
         true
     }
@@ -122,7 +122,7 @@ impl Scatterable for Metal {
         let mut reflected = reflect(&ray_in.direction, &hit_record.normal);
         reflected = reflected.unit_vector() + Vec3d::random().unit_vector() * self.fuss;
 
-        scattered.clone_from(&Ray::new(hit_record.point, reflected, 0.0));
+        scattered.clone_from(&Ray::new(hit_record.point, reflected, ray_in.time));
         attenuation.clone_from(&self.albedo);
         dot(&scattered.direction, &hit_record.normal) > 0.0
     }
@@ -168,7 +168,7 @@ impl Scatterable for Dielectric {
             refract(&unit_direction, &hit_record.normal, ri)
         };
         attenuation.clone_from(&Vec3d::new(1.0, 1.0, 1.0));
-        scattered.clone_from(&Ray::new(hit_record.point, direction, 0.0));
+        scattered.clone_from(&Ray::new(hit_record.point, direction, ray_in.time));
         true
     }
 }

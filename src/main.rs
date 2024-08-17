@@ -4,16 +4,17 @@ use ray_tracing::object::{Sphere, HittableVec};
 use ray_tracing::image::write_image;
 use ray_tracing::object::material::{Material, Lambertian, Metal, Dielectric};
 
+use rand::Rng;
 use std::time::Instant;
 
 fn main() {
-
+    let mut rng = rand::thread_rng();
     let mut camera = Camera::new();
 
-    camera.set_depth(80);
+    camera.set_depth(50);
     camera.set_aspect_ratio(16.0 / 9.0);
-    camera.set_resolution_width(1200);
-    camera.set_samples_per_pixel(500);
+    camera.set_resolution_width(1080);
+    camera.set_samples_per_pixel(100);
     camera.set_v_fov(20.0);
 
     camera.set_look_from(Vec3d::new(13.0, 2.0, 3.0));
@@ -26,7 +27,7 @@ fn main() {
     let mut world = HittableVec::new();
 
     let ground = Material::Lambertian(Lambertian::new(Vec3d::new(0.5, 0.5, 0.5)));
-    world.add(Box::new(Sphere::new(Vec3d::new(0.0, -1000.0, 0.0), 1000.0, ground)));
+    world.add(Box::new(Sphere::static_sphere(Vec3d::new(0.0, -1000.0, 0.0), 1000.0, ground)));
 
     for a in -11..11 {
         for b in -11..11 {
@@ -37,30 +38,31 @@ fn main() {
                 if choose_mat < 0.8 {
                     let albedo = Vec3d::random() * Vec3d::random();
                     sphere_material = Material::Lambertian(Lambertian::new(albedo));
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    let center2 = center + Vec3d::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+                    world.add(Box::new(Sphere::moving_sphere(center, center2, 0.2, sphere_material)));
                 } else if choose_mat < 0.95 {
                     let albedo = Vec3d::gen_range(0.5, 1.0);
                     let fuzz = rand::random::<f64>() * 0.5;
                     sphere_material = Material::Metal(Metal::new(albedo, fuzz));
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    world.add(Box::new(Sphere::static_sphere(center, 0.2, sphere_material)));
                 } else {
                     sphere_material = Material::Dielectric(Dielectric::new(1.5));
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    world.add(Box::new(Sphere::static_sphere(center, 0.2, sphere_material)));
                 }
             }
         }
     }
 
     let material1 = Material::Dielectric(Dielectric::new(1.5));
-    world.add(Box::new(Sphere::new(Vec3d::new(0.0, 1.0, 0.0), 1.0, material1)));
+    world.add(Box::new(Sphere::static_sphere(Vec3d::new(0.0, 1.0, 0.0), 1.0, material1)));
 
     let material2 = Material::Lambertian(Lambertian::new(Vec3d::new(0.4, 0.2, 0.1)));
-    world.add(Box::new(Sphere::new(Vec3d::new(-4.0, 1.0, 0.0), 1.0, material2)));
+    world.add(Box::new(Sphere::static_sphere(Vec3d::new(-4.0, 1.0, 0.0), 1.0, material2)));
 
     let material3 = Material::Metal(Metal::new(Vec3d::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Box::new(Sphere::new(Vec3d::new(4.0, 1.0, 0.0), 1.0, material3)));
+    world.add(Box::new(Sphere::static_sphere(Vec3d::new(4.0, 1.0, 0.0), 1.0, material3)));
 
-    let world_ref : &'static HittableVec = Box::leak(Box::new(world));
+    let world_ref: &'static HittableVec = Box::leak(Box::new(world));
 
     let now = Instant::now();
     let image = camera.render(world_ref);
