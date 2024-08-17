@@ -5,6 +5,10 @@ use rand::Rng;
 use crate::object::material::Scatterable;
 use indicatif::ProgressBar;
 
+use rayon;
+use std::sync::mpsc;
+
+#[derive(Copy, Clone)]
 pub struct Camera {
     center: Vec3d,
     aspect_ratio: f64,
@@ -228,7 +232,7 @@ impl Camera {
         self.center + self.defocus_disk_u() * p.x() + self.defocus_disk_v() * p.y()
     }
 
-    pub fn render(&mut self, world: &HittableVec) -> Vec<Vec3d> {
+    pub fn render(&mut self, world: &'static HittableVec) -> Vec<Vec3d> {
         self.initialize();
 
         let mut image = vec![
@@ -240,16 +244,34 @@ impl Camera {
             self.resolution_height() as u64 * self.resolution_width() as u64
         );
 
-        for h in 0..self.resolution_height() {
-            for w in 0..self.resolution_width() {
-                let color = Vec3d::zero();
-                for _ in 0..self.samples_per_pixel {
-                    let ray = self.sample_ray(w, h);
-                    color + Self::ray_color(&ray, world, self.max_depth);
+        // Multi threading computation
+
+        let thread_pool = rayon::ThreadPoolBuilder::new().num_threads(10).build().unwrap();
+        let (tx, rx) = mpsc::channel();
+
+        rayon::scope(|s| {
+            for h in 0..self.resolution_height() {
+                for w in 0..self.resolution_width() {
+                    let tx_clone = tx.clone();
+                    let camera = self.clone();
+
+                    thread_pool.spawn(move || {
+                        let mut color = Vec3d::zero();
+                        for _ in 0..camera.samples_per_pixel {
+                            let ray = camera.sample_ray(w, h);
+                            color += Self::ray_color(&ray, world, camera.max_depth);
+                        }
+                        tx_clone.send((w, h, color * camera.samples_scale)).unwrap();
+                    })
                 }
-                image[(h * self.resolution_width() + w) as usize] = color * self.samples_scale;
-                bar.inc(1);
             }
+        });
+
+
+        for _ in 0..(self.resolution_height() * self.resolution_width()) {
+            let (w, h, color) = rx.recv().unwrap();
+            image[(h * self.resolution_width() + w) as usize] = color;
+            bar.inc(1);
         }
         bar.finish_and_clear();
         image

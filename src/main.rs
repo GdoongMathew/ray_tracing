@@ -60,7 +60,8 @@ fn main() {
     let material3 = Material::Metal(Metal::new(Vec3d::new(0.7, 0.6, 0.5), 0.0));
     world.add(Box::new(Sphere::new(Vec3d::new(4.0, 1.0, 0.0), 1.0, material3)));
 
-    let image = camera.render(&world);
+    let world_ref : &'static HittableVec = Box::leak(Box::new(world));
+    let image = camera.render(world_ref);
 
     write_image("output.png", &image, camera.resolution_width(), camera.resolution_height());
 }
