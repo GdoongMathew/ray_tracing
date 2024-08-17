@@ -66,6 +66,7 @@ mod test_hittable {
         let ray = Ray::new(
             Vec3d::new(0.0, 0.0, -5.0),
             Vec3d::new(0.0, 0.0, 1.0),
+            0.0,
         );
         let interval = Interval { min: 0.0, max: f64::INFINITY };
         let hit_record = sphere.hit(&ray, &interval).unwrap();
@@ -87,6 +88,7 @@ mod test_hittable {
         let ray = Ray::new(
             Vec3d::new(0.0, 0.0, 0.0),
             Vec3d::new(0.0, 0.0, 1.0),
+            0.0,
         );
         let interval = Interval { min: 0.0, max: f64::INFINITY };
         let hit_record = sphere.hit(&ray, &interval).unwrap();
@@ -108,6 +110,7 @@ mod test_hittable {
         let ray = Ray::new(
             Vec3d::new(0.0, 0.0, -5.0),
             Vec3d::new(0.0, 0.0, -1.0),
+            0.0,
         );
         let interval = Interval { min: 0.0, max: f64::INFINITY };
         let hit_record = sphere.hit(&ray, &interval);
@@ -125,6 +128,7 @@ mod test_hittable {
         let ray = Ray::new(
             Vec3d::new(2.0, 2.0, -1.0),
             Vec3d::new(2.0, 0.0, -1.0),
+            0.0,
         );
         let interval = Interval { min: 0.0, max: f64::INFINITY };
         let hit_record = sphere.hit(&ray, &interval);

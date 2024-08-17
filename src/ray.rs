@@ -12,6 +12,7 @@ use crate::vec3d::Vec3d;
 /// let ray = Ray::new(
 ///     Vec3d::new(1.0, 2.0, 3.0),
 ///     Vec3d::new(4.0, 5.0, 6.0),
+///     0.0,
 /// );
 /// assert_eq!(ray.origin, Vec3d::new(1.0, 2.0, 3.0));
 /// assert_eq!(ray.direction, Vec3d::new(4.0, 5.0, 6.0));
@@ -24,16 +25,17 @@ use crate::vec3d::Vec3d;
 pub struct Ray {
     pub origin: Vec3d,
     pub direction: Vec3d,
+    pub time: f64,
 }
 
 impl Ray {
 
     pub fn default() -> Self {
-        Self { origin: Vec3d::zero(), direction: Vec3d::zero() }
+        Self { origin: Vec3d::zero(), direction: Vec3d::zero(), time: 0.0}
     }
 
-    pub fn new(origin: Vec3d, direction: Vec3d) -> Self {
-        Self { origin, direction }
+    pub fn new(origin: Vec3d, direction: Vec3d, time: f64) -> Self {
+        Self { origin, direction, time }
     }
 
     pub fn at(&self, t: f64) -> Vec3d {
@@ -51,6 +53,7 @@ mod test_ray {
         let ray = Ray::new(
             Vec3d::new(1.0, 2.0, 3.0),
             Vec3d::new(4.0, 5.0, 6.0),
+            0.0,
         );
         assert_eq!(ray.origin, Vec3d::new(1.0, 2.0, 3.0));
         assert_eq!(ray.direction, Vec3d::new(4.0, 5.0, 6.0));
@@ -61,6 +64,7 @@ mod test_ray {
         let ray = Ray::new(
             Vec3d::new(1.0, 2.0, 3.0),
             Vec3d::new(4.0, 5.0, 6.0),
+            0.0,
         );
 
         let t: f64 = 0.5;
