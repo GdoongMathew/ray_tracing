@@ -242,10 +242,10 @@ impl Camera {
 
         for h in 0..self.resolution_height() {
             for w in 0..self.resolution_width() {
-                let mut color = Vec3d::new(0.0, 0.0, 0.0);
+                let color = Vec3d::zero();
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.sample_ray(w, h);
-                    color += Self::ray_color(&ray, world, self.max_depth);
+                    color + Self::ray_color(&ray, world, self.max_depth);
                 }
                 image[(h * self.resolution_width() + w) as usize] = color * self.samples_scale;
                 bar.inc(1);
