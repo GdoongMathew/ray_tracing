@@ -1,0 +1,183 @@
+use crate::ray::{Interval, Ray, EMPTY};
+use crate::vec3d::Vec3d;
+
+
+/// Axis-aligned bounding box.
+/// # Fields
+/// * `interval_x` - The interval of x values.
+/// * `interval_y` - The interval of y values.
+/// * `interval_z` - The interval of z values.
+#[derive(Debug, Clone, Copy)]
+pub struct AABB {
+    interval_x: Interval,
+    interval_y: Interval,
+    interval_z: Interval,
+}
+
+
+impl AABB {
+    /// Creates a new AABB.
+    /// # Arguments
+    /// * `interval_x` - The interval of x values.
+    /// * `interval_y` - The interval of y values.
+    /// * `interval_z` - The interval of z values.
+    /// # Returns
+    /// The new AABB.
+    pub fn new(interval_x: Interval, interval_y: Interval, interval_z: Interval) -> Self {
+        Self {
+            interval_x,
+            interval_y,
+            interval_z,
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self::new(EMPTY, EMPTY, EMPTY)
+    }
+
+    pub fn from_points(pt1: &Vec3d, pt2: &Vec3d) -> Self {
+        let interval_x = if pt1.x() <= pt2.x() {
+            Interval { min: pt1.x(), max: pt2.x() }
+        } else {
+            Interval { min: pt2.x(), max: pt1.x() }
+        };
+        let interval_y = if pt1.y() <= pt2.y() {
+            Interval { min: pt1.y(), max: pt2.y() }
+        } else {
+            Interval { min: pt2.y(), max: pt1.y() }
+        };
+        let interval_z = if pt1.z() <= pt2.z() {
+            Interval { min: pt1.z(), max: pt2.z() }
+        } else {
+            Interval { min: pt2.z(), max: pt1.z() }
+        };
+        Self::new(interval_x, interval_y, interval_z)
+    }
+
+    pub fn surrounding_box(box1: &AABB, box2: &AABB) -> Self {
+        let interval_x = Interval::interval(&box1.interval_x, &box2.interval_x);
+        let interval_y = Interval::interval(&box1.interval_y, &box2.interval_y);
+        let interval_z = Interval::interval(&box1.interval_z, &box2.interval_z);
+        Self::new(interval_x, interval_y, interval_z)
+    }
+
+    pub fn axis_interval(&self, axis: usize) -> Interval {
+        match axis {
+            0 => self.interval_x.clone(),
+            1 => self.interval_y.clone(),
+            2 => self.interval_z.clone(),
+            _ => panic!("Invalid axis: {}", axis),
+        }
+    }
+
+    pub fn hit(&self, ray: &Ray, interval: &mut Interval) -> bool {
+        for axis in 0..3 {
+            let ax = self.axis_interval(axis);
+            let adinv = 1.0 / match axis {
+                0 => ray.direction.x(),
+                1 => ray.direction.y(),
+                2 => ray.direction.z(),
+                _ => panic!("Invalid axis: {}", axis),
+            };
+
+            let origin_axis = match axis {
+                0 => ray.origin.x(),
+                1 => ray.origin.y(),
+                2 => ray.origin.z(),
+                _ => panic!("Invalid axis: {}", axis),
+            };
+
+            let t0 = (ax.min - origin_axis) * adinv;
+            let t1 = (ax.max - origin_axis) * adinv;
+
+            if t0 < t1 {
+                interval.min = t0.max(interval.min);
+                interval.max = t1.min(interval.max);
+            } else {
+                interval.min = t1.max(interval.min);
+                interval.max = t0.min(interval.max);
+            }
+
+            if interval.max <= interval.min {
+                return false;
+            }
+        }
+        true
+    }
+}
+
+#[cfg(test)]
+mod test_aabb {
+    use super::*;
+
+    #[test]
+    fn test_aabb_new() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 2.0 },
+            Interval { min: 3.0, max: 4.0 },
+            Interval { min: 5.0, max: 6.0 },
+        );
+
+        assert_eq!(aabb.interval_x, Interval { min: 1.0, max: 2.0 });
+        assert_eq!(aabb.interval_y, Interval { min: 3.0, max: 4.0 });
+        assert_eq!(aabb.interval_z, Interval { min: 5.0, max: 6.0 });
+    }
+
+    #[test]
+    fn test_aabb_empty() {
+        let aabb = AABB::empty();
+        assert_eq!(aabb.interval_x, EMPTY);
+        assert_eq!(aabb.interval_y, EMPTY);
+        assert_eq!(aabb.interval_z, EMPTY);
+    }
+
+    #[test]
+    fn test_aabb_from_points_1() {
+        let aabb = AABB::from_points(
+            &Vec3d::new(1.0, 2.0, 3.0),
+            &Vec3d::new(4.0, 5.0, 6.0),
+        );
+        assert_eq!(aabb.interval_x, Interval { min: 1.0, max: 4.0 });
+        assert_eq!(aabb.interval_y, Interval { min: 2.0, max: 5.0 });
+        assert_eq!(aabb.interval_z, Interval { min: 3.0, max: 6.0 });
+    }
+
+    #[test]
+    fn test_aabb_from_points_2() {
+        let aabb = AABB::from_points(
+            &Vec3d::new(4.0, 5.0, 6.0),
+            &Vec3d::new(1.0, 2.0, 3.0),
+        );
+        assert_eq!(aabb.interval_x, Interval { min: 1.0, max: 4.0 });
+        assert_eq!(aabb.interval_y, Interval { min: 2.0, max: 5.0 });
+        assert_eq!(aabb.interval_z, Interval { min: 3.0, max: 6.0 });
+    }
+
+    #[test]
+    fn test_aabb_surrounding_box() {
+        let box1 = AABB::from_points(
+            &Vec3d::new(1.0, 2.0, 3.0),
+            &Vec3d::new(4.0, 5.0, 6.0),
+        );
+        let box2 = AABB::from_points(
+            &Vec3d::new(0.0, 1.0, 2.0),
+            &Vec3d::new(5.0, 6.0, 7.0),
+        );
+        let aabb = AABB::surrounding_box(&box1, &box2);
+        assert_eq!(aabb.interval_x, Interval { min: 0.0, max: 5.0 });
+        assert_eq!(aabb.interval_y, Interval { min: 1.0, max: 6.0 });
+        assert_eq!(aabb.interval_z, Interval { min: 2.0, max: 7.0 });
+    }
+
+    #[test]
+    fn test_aabb_axis_interval() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 2.0 },
+            Interval { min: 3.0, max: 4.0 },
+            Interval { min: 5.0, max: 6.0 },
+        );
+        assert_eq!(aabb.axis_interval(0), Interval { min: 1.0, max: 2.0 });
+        assert_eq!(aabb.axis_interval(1), Interval { min: 3.0, max: 4.0 });
+        assert_eq!(aabb.axis_interval(2), Interval { min: 5.0, max: 6.0 });
+    }
+}
