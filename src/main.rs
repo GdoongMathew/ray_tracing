@@ -4,7 +4,7 @@ use ray_tracing::object::{Sphere, HittableVec};
 use ray_tracing::image::write_image;
 use ray_tracing::object::material::{Material, Lambertian, Metal, Dielectric};
 
-
+use std::time::Instant;
 
 fn main() {
 
@@ -61,7 +61,11 @@ fn main() {
     world.add(Box::new(Sphere::new(Vec3d::new(4.0, 1.0, 0.0), 1.0, material3)));
 
     let world_ref : &'static HittableVec = Box::leak(Box::new(world));
+
+    let now = Instant::now();
     let image = camera.render(world_ref);
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:?}", elapsed);
 
     write_image("output.png", &image, camera.resolution_width(), camera.resolution_height());
 }
