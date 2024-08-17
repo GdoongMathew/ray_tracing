@@ -93,12 +93,36 @@ mod test_ray {
 /// assert_eq!(interval.min, 1.0);
 /// assert_eq!(interval.max, 2.0);
 /// ```
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interval {
     pub min: f64,
     pub max: f64,
 }
 
 impl Interval {
+
+    /// Creates a new interval with the given two interval values.
+    /// # Arguments
+    /// * `interval_1` - The first interval value.
+    /// * `interval_2` - The second interval value.
+    /// # Returns
+    /// The new interval.
+    /// # Examples
+    /// ```
+    /// use ray_tracing::ray::Interval;
+    /// let interval_1 = Interval{min: 1.0, max:2.0};
+    /// let interval_2 = Interval{min: 3.0, max:4.0};
+    /// let result = Interval::interval(&interval_1, &interval_2);
+    /// assert_eq!(result.min, 1.0);
+    /// assert_eq!(result.max, 4.0);
+    /// ```
+    pub fn interval(interval_1: &Self, interval_2: &Self) -> Self {
+        Self {
+            min: interval_1.min.min(interval_2.min),
+            max: interval_1.max.max(interval_2.max),
+        }
+    }
+
     pub fn contains(&self, t: f64) -> bool {
         self.min <= t && t <= self.max
     }

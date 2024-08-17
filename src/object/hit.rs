@@ -1,5 +1,6 @@
 use crate::vec3d::{Vec3d, dot};
 use crate::ray::{Ray, Interval};
+use crate::object::aabb::AABB;
 use super::material::Material;
 
 #[derive(Debug, Clone, Copy)]
@@ -33,21 +34,26 @@ impl <'m> HitRecord<'m> {
 
 pub trait Hittable: Send + Sync {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord>;
+
+    fn bounding_box(&self) -> AABB;
 }
 
 
 pub struct HittableVec {
     pub objects: Vec<Box<dyn Hittable>>,
+    bbox: AABB,
 }
 
 impl HittableVec {
     pub fn new() -> Self {
         Self {
             objects: Vec::new(),
+            bbox: AABB::empty(),
         }
     }
 
     pub fn add(&mut self, object: Box<dyn Hittable>) {
+        self.bbox = AABB::surrounding_box(&self.bbox, &object.bounding_box());
         self.objects.push(object);
     }
 
@@ -69,4 +75,9 @@ impl Hittable for HittableVec {
         }
         hit_record
     }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox.clone()
+    }
+
 }

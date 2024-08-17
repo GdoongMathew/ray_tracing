@@ -2,6 +2,7 @@ use crate::ray::{Interval, Ray};
 use super::hit::*;
 use crate::vec3d::{Vec3d, dot};
 use crate::object::material::Material;
+use crate::object::aabb::AABB;
 
 pub struct Sphere {
     center: Vec3d,
@@ -9,6 +10,7 @@ pub struct Sphere {
     material: Material,
 
     center_vec: Vec3d,
+    bbox: AABB,
 }
 
 impl Sphere {
@@ -17,7 +19,11 @@ impl Sphere {
         radius: f64,
         material: Material,
     ) -> Self {
-        Self::new(center, center, radius, material)
+        let bbox = AABB::from_points(
+            &(center - Vec3d::new(radius, radius, radius)),
+            &(center + Vec3d::new(radius, radius, radius)),
+        );
+        Self::new(center, center, radius, material, bbox)
     }
 
     pub fn moving_sphere(
@@ -26,7 +32,13 @@ impl Sphere {
         radius: f64,
         material: Material,
     ) -> Self {
-        Self::new(center, center1, radius, material)
+
+        let rvec = Vec3d::new(radius, radius, radius);
+        let bbox = AABB::surrounding_box(
+            &AABB::from_points(&(center - rvec), &(center + rvec)),
+            &AABB::from_points(&(center1 - rvec), &(center1 + rvec))
+        );
+        Self::new(center, center1, radius, material, bbox)
     }
 
     fn new(
@@ -34,6 +46,7 @@ impl Sphere {
         center1: Vec3d,
         radius: f64,
         material: Material,
+        bbox: AABB,
     ) -> Self {
         if radius <= 0.0 {
             panic!("Radius must be greater than 0, but was {} instead.", radius);
@@ -43,6 +56,7 @@ impl Sphere {
             radius,
             material,
             center_vec: center1 - center,
+            bbox,
         }
     }
 
@@ -90,6 +104,10 @@ impl Hittable for Sphere {
         let outward_normal = (rec.point - self.center) / self.radius;
         rec.set_face_normal(ray, outward_normal);
         Some(rec)
+    }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox.clone()
     }
 }
 
