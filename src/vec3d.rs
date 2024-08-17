@@ -58,6 +58,7 @@ impl Vec3d {
     /// let vec = Vec3d::new(1.0, 2.0, 3.0);
     /// assert_eq!(vec.length(), 3.7416573867739413);
     /// ```
+    #[inline(always)]
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
@@ -69,6 +70,7 @@ impl Vec3d {
     /// let vec = Vec3d::new(1.0, 2.0, 3.0);
     /// assert_eq!(vec.length_squared(), 14.0);
     /// ```
+    #[inline(always)]
     pub fn length_squared(&self) -> f64 {
         self.x().powi(2) + self.y().powi(2) + self.z().powi(2)
     }
@@ -81,6 +83,7 @@ impl Vec3d {
     /// let result = vec.unit_vector();
     /// assert_eq!(result, Vec3d::new(0.2672612419124244, 0.5345224838248488, 0.8017837257372732));
     /// ```
+    #[inline(always)]
     pub fn unit_vector(&self) -> Self {
         *self / self.length()
     }
@@ -165,6 +168,7 @@ impl std::fmt::Display for Vec3d {
 /// let result = dot(&vec, &vec2);
 /// assert_eq!(result, 32.0);
 /// ```
+#[inline(always)]
 pub fn dot(v1: &Vec3d, v2: &Vec3d) -> f64 {
     v1.x() * v2.x() + v1.y() * v2.y() + v1.z() * v2.z()
 }
@@ -193,6 +197,7 @@ pub fn distance<'a>(v1: &'a Vec3d, v2: &'a Vec3d) -> f64 {
 /// let result = cross(&vec, &vec2);
 /// assert_eq!(result, Vec3d::new(0.0, 0.0, 1.0));
 /// ```
+#[inline(always)]
 pub fn cross(v1: &Vec3d, v2: &Vec3d) -> Vec3d {
     Vec3d::new(
         v1.y() * v2.z() - v1.z() * v2.y(),
