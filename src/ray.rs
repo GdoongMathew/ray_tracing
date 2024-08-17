@@ -119,6 +119,23 @@ impl Interval {
     pub fn size(&self) -> f64 {
         self.max - self.min
     }
+
+    /// Expands the interval by a given amount.
+    /// # Arguments
+    /// * `t` - The amount to expand the interval by.
+    /// # Returns
+    /// The expanded interval.
+    /// # Examples
+    /// ```
+    /// use ray_tracing::ray::Interval;
+    /// let interval = Interval { min: 1.0, max: 2.0 };
+    /// let result = interval.expand(0.5);
+    /// assert_eq!(result.min, 0.5);
+    /// assert_eq!(result.max, 2.5);
+    /// ```
+    pub fn expand(&self, t: f64) -> Interval {
+        Interval { min: self.min - t, max: self.max + t }
+    }
 }
 
 pub static EMPTY: Interval = Interval { min: f64::INFINITY, max: f64::NEG_INFINITY };
