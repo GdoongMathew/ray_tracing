@@ -5,6 +5,7 @@ use rand::Rng;
 use crate::object::material::Scatterable;
 use indicatif::ProgressBar;
 
+use std::thread;
 use rayon;
 use std::sync::mpsc;
 
@@ -245,8 +246,10 @@ impl Camera {
         );
 
         // Multi threading computation
+        let available_threads = thread::available_parallelism().unwrap().get();
+        let num_threads = (available_threads as f32 * 0.75) as usize;
 
-        let thread_pool = rayon::ThreadPoolBuilder::new().num_threads(10).build().unwrap();
+        let thread_pool = rayon::ThreadPoolBuilder::new().num_threads(num_threads).build().unwrap();
         let (tx, rx) = mpsc::channel();
 
         rayon::scope(|s| {
