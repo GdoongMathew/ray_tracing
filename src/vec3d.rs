@@ -255,6 +255,14 @@ impl Add<Vec3d> for Vec3d {
     }
 }
 
+/// Overloading for adding a Vec3d to a scalar
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let vec = Vec3d::new(1.0, 2.0, 3.0);
+/// let result = vec + 2.0;
+/// assert_eq!(result, Vec3d::new(3.0, 4.0, 5.0));
+/// ```
 impl Add<f64> for Vec3d {
     type Output = Self;
 
@@ -265,6 +273,21 @@ impl Add<f64> for Vec3d {
     }
 }
 
+/// Overloading for adding a scalar to a Vec3d
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let vec = Vec3d::new(1.0, 2.0, 3.0);
+/// let result = 2.0 + vec;
+/// assert_eq!(result, Vec3d::new(3.0, 4.0, 5.0));
+/// ```
+impl Add<Vec3d> for f64 {
+    type Output = Vec3d;
+
+    fn add(self, rhs: Vec3d) -> Self::Output {
+        rhs + self
+    }
+}
 
 /// AddAssign overloading for Vec3d
 /// # Examples
@@ -326,6 +349,15 @@ impl Sub<Vec3d> for Vec3d {
     }
 }
 
+
+/// Overloading for subtracting a scalar from a Vec3d
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let vec = Vec3d::new(1.0, 2.0, 3.0);
+/// let result = vec - 2.0;
+/// assert_eq!(result, Vec3d::new(-1.0, 0.0, 1.0));
+/// ```
 impl Sub<f64> for Vec3d {
     type Output = Self;
     fn sub(self, rhs: f64) -> Self::Output {
@@ -333,6 +365,20 @@ impl Sub<f64> for Vec3d {
             vector: (self.x() - rhs, self.y() - rhs, self.z() - rhs)
         }
     }
+}
+
+
+/// Overloading for subtracting a Vec3d from a scalar
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let vec = Vec3d::new(1.0, 2.0, 3.0);
+/// let result = 2.0 - vec;
+/// assert_eq!(result, Vec3d::new(1.0, 0.0, -1.0));
+/// ```
+impl Sub<Vec3d> for f64 {
+    type Output = Vec3d;
+    fn sub(self, rhs: Vec3d) -> Self::Output { rhs - self }
 }
 
 /// SubAssign overloading for Vec3d
