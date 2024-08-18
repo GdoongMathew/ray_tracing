@@ -1,3 +1,4 @@
+use crate::object::HitRecord;
 use crate::ray::{Interval, Ray, EMPTY};
 use crate::vec3d::Vec3d;
 
@@ -70,7 +71,7 @@ impl AABB {
         }
     }
 
-    pub fn hit(&self, ray: &Ray, interval: &mut Interval) -> bool {
+    pub fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
         for axis in 0..3 {
             let ax = self.axis_interval(axis);
             let adinv = 1.0 / match axis {
@@ -90,19 +91,23 @@ impl AABB {
             let t0 = (ax.min - origin_axis) * adinv;
             let t1 = (ax.max - origin_axis) * adinv;
 
-            if t0 < t1 {
-                interval.min = t0.max(interval.min);
-                interval.max = t1.min(interval.max);
+            let interval_hit: Interval = if t0 < t1 {
+                Interval {
+                    min: t0.max(interval.min),
+                    max: t1.min(interval.max),
+                }
             } else {
-                interval.min = t1.max(interval.min);
-                interval.max = t0.min(interval.max);
-            }
+                Interval {
+                    min: t1.max(interval.min),
+                    max: t0.min(interval.max),
+                }
+            };
 
-            if interval.max <= interval.min {
-                return false;
+            if interval_hit.max <= interval_hit.min {
+                return None;
             }
         }
-        true
+        Some(HitRecord::empty())
     }
 }
 

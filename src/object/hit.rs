@@ -1,7 +1,10 @@
 use crate::vec3d::{Vec3d, dot};
 use crate::ray::{Ray, Interval};
 use crate::object::aabb::AABB;
-use super::material::Material;
+use super::material::{Material, Empty};
+use rand::Rng;
+use std::cmp::Ordering;
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct HitRecord<'m> {
@@ -13,8 +16,7 @@ pub struct HitRecord<'m> {
     pub material: &'m Material,
 }
 
-impl <'m> HitRecord<'m> {
-
+impl<'m> HitRecord<'m> {
     pub fn new(material: &'m Material, t: f64, point: Vec3d) -> Self {
         Self {
             t,
@@ -23,6 +25,16 @@ impl <'m> HitRecord<'m> {
             front_face: false,
             material,
         }
+    }
+
+    /// An empty hitrecord, simply for the purpose of determining whether
+    /// an object is being hit without further hittable calculation.
+    pub fn empty() -> Self {
+        Self::new(
+            &Material::Empty(Empty {}),
+            0.0,
+            Vec3d::zero(),
+        )
     }
 
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3d) {
