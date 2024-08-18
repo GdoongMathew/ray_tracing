@@ -3,14 +3,15 @@ use crate::vec3d::{Vec3d, dot};
 use crate::ray::Ray;
 use crate::object::hit::HitRecord;
 
-pub trait Scatterable {
+type Scattered = Option<(Option<Ray>, Vec3d)>;
+
+
+pub trait Scatterable: Send + Sync {
     fn scatter(
         &self,
         ray_in: &Ray,
         hit_record: &HitRecord,
-        attenuation: &mut Vec3d,
-        scattered: &mut Ray,
-    ) -> bool;
+    ) -> Scattered;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -27,15 +28,13 @@ impl Scatterable for Material {
         &self,
         ray_in: &Ray,
         hit_record: &HitRecord,
-        attenuation: &mut Vec3d,
-        scattered: &mut Ray,
-    ) -> bool {
+    ) -> Scattered {
         match self {
-            Material::Empty(e) => e.scatter(ray_in, hit_record, attenuation, scattered),
-            Material::Light(li) => li.scatter(ray_in, hit_record, attenuation, scattered),
-            Material::Lambertian(l) => l.scatter(ray_in, hit_record, attenuation, scattered),
-            Material::Metal(metal) => metal.scatter(ray_in, hit_record, attenuation, scattered),
-            Material::Dielectric(d) => d.scatter(ray_in, hit_record, attenuation, scattered),
+            Material::Empty(e) => e.scatter(ray_in, hit_record),
+            Material::Light(li) => li.scatter(ray_in, hit_record),
+            Material::Lambertian(l) => l.scatter(ray_in, hit_record),
+            Material::Metal(metal) => metal.scatter(ray_in, hit_record),
+            Material::Dielectric(d) => d.scatter(ray_in, hit_record),
         }
     }
 }
@@ -44,8 +43,12 @@ impl Scatterable for Material {
 pub struct Empty {}
 
 impl Scatterable for Empty {
-    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord, attenuation: &mut Vec3d, scattered: &mut Ray) -> bool {
-        false
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: &HitRecord,
+    ) -> Scattered {
+        None
     }
 }
 
@@ -68,11 +71,7 @@ impl Scatterable for Light {
         &self,
         ray_in: &Ray,
         hit_record: &HitRecord,
-        attenuation: &mut Vec3d,
-        scattered: &mut Ray,
-    ) -> bool {
-        false
-    }
+    ) -> Scattered { Some((None, Vec3d::new(1.0, 1.0, 1.0))) }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -91,19 +90,14 @@ impl Scatterable for Lambertian {
         &self,
         ray_in: &Ray,
         hit_record: &HitRecord,
-        attenuation: &mut Vec3d,
-        scattered: &mut Ray,
-    ) -> bool {
+    ) -> Scattered {
         let mut scatter_direction = hit_record.normal + Vec3d::random().unit_vector();
 
         // Catch degenerate scatter direction
         if scatter_direction.near_zero() {
             scatter_direction.clone_from(&hit_record.normal);
         }
-
-        scattered.clone_from(&Ray::new(hit_record.point, scatter_direction, ray_in.time));
-        attenuation.clone_from(&self.albedo);
-        true
+        Some((Some(Ray::new(hit_record.point, scatter_direction, ray_in.time)), self.albedo))
     }
 }
 
@@ -128,15 +122,14 @@ impl Scatterable for Metal {
         &self,
         ray_in: &Ray,
         hit_record: &HitRecord,
-        attenuation: &mut Vec3d,
-        scattered: &mut Ray,
-    ) -> bool {
+    ) -> Scattered {
         let mut reflected = reflect(&ray_in.direction, &hit_record.normal);
         reflected = reflected.unit_vector() + Vec3d::random().unit_vector() * self.fuss;
 
-        scattered.clone_from(&Ray::new(hit_record.point, reflected, ray_in.time));
-        attenuation.clone_from(&self.albedo);
-        dot(&scattered.direction, &hit_record.normal) > 0.0
+        let ray = Ray::new(hit_record.point, reflected, ray_in.time);
+        let dot = dot(&ray.direction, &hit_record.normal);
+        if dot <= 0.0 { None }
+        else { Some((Some(ray), self.albedo)) }
     }
 }
 
@@ -163,9 +156,7 @@ impl Scatterable for Dielectric {
         &self,
         ray_in: &Ray,
         hit_record: &HitRecord,
-        attenuation: &mut Vec3d,
-        scattered: &mut Ray,
-    ) -> bool {
+    ) -> Scattered {
         let ri = if hit_record.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
 
         let unit_direction = ray_in.direction.unit_vector();
@@ -179,9 +170,10 @@ impl Scatterable for Dielectric {
         } else {
             refract(&unit_direction, &hit_record.normal, ri)
         };
-        attenuation.clone_from(&Vec3d::new(1.0, 1.0, 1.0));
-        scattered.clone_from(&Ray::new(hit_record.point, direction, ray_in.time));
-        true
+
+        let attenuation = Vec3d::new(1.0, 1.0, 1.0);
+        let scattered = Ray::new(hit_record.point, direction, ray_in.time);
+        Some((Some(scattered), attenuation))
     }
 }
 
@@ -317,14 +309,7 @@ mod test_material {
             0.0,
         );
         let hit_record = HitRecord::empty();
-        let mut attenuation = Vec3d::zero();
-        let mut scattered = Ray::new(
-            Vec3d::zero(),
-            Vec3d::zero(),
-            0.0,
-        );
-
-        let ret = empty.scatter(&ray_in, &hit_record, &mut attenuation, &mut scattered);
-        assert_eq!(ret, false);
+        let ret = empty.scatter(&ray_in, &hit_record);
+        assert!(ret.is_none());
     }
 }

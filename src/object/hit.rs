@@ -2,8 +2,7 @@ use crate::vec3d::{Vec3d, dot};
 use crate::ray::{Ray, Interval};
 use crate::object::aabb::AABB;
 use super::material::{Material, Empty};
-use rand::Rng;
-use std::cmp::Ordering;
+
 
 
 #[derive(Debug, Clone, Copy)]
@@ -80,7 +79,7 @@ impl Hittable for HittableVec {
         let mut closest_so_far = interval.max;
 
         for object in self.objects.iter() {
-            if let Some(rec) = object.hit(ray, &Interval{min: interval.min, max: closest_so_far}) {
+            if let Some(rec) = object.hit(ray, &Interval { min: interval.min, max: closest_so_far }) {
                 closest_so_far = rec.t;
                 hit_record = Some(rec);
             }
