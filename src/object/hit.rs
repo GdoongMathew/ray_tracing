@@ -169,7 +169,7 @@ impl BVHNode {
 
 impl Hittable for BVHNode {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
-        if self.bbox.hit(ray, interval).is_none() {
+        if self.bbox.hit(ray, interval) {
             return None;
         }
 

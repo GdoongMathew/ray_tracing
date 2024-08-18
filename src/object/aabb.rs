@@ -1,5 +1,4 @@
-use crate::object::HitRecord;
-use crate::ray::{Interval, Ray, EMPTY};
+use crate::ray::{Interval, Ray, EMPTY, UNIVERSE};
 use crate::vec3d::Vec3d;
 
 
@@ -32,9 +31,6 @@ impl AABB {
         }
     }
 
-    pub fn empty() -> Self {
-        Self::new(EMPTY, EMPTY, EMPTY)
-    }
 
     pub fn from_points(pt1: &Vec3d, pt2: &Vec3d) -> Self {
         let interval_x = if pt1.x() <= pt2.x() {
@@ -71,7 +67,7 @@ impl AABB {
         }
     }
 
-    pub fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, interval: &Interval) -> bool {
         for axis in 0..3 {
             let ax = self.axis_interval(axis);
             let adinv = 1.0 / match axis {
@@ -104,12 +100,18 @@ impl AABB {
             };
 
             if interval_hit.max <= interval_hit.min {
-                return None;
+                return false;
             }
         }
-        Some(HitRecord::empty())
+        true
     }
 }
+
+
+pub static EMPTY_AABB: AABB = AABB::new(EMPTY, EMPTY, EMPTY);
+
+pub static UNIVERSE_AABB: AABB = AABB::new(UNIVERSE, UNIVERSE, UNIVERSE);
+
 
 #[cfg(test)]
 mod test_aabb {
