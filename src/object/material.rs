@@ -15,6 +15,7 @@ pub trait Scatterable {
 
 #[derive(Debug, Clone, Copy)]
 pub enum Material {
+    Empty(Empty),
     Light(Light),
     Lambertian(Lambertian),
     Metal(Metal),
@@ -30,6 +31,7 @@ impl Scatterable for Material {
         scattered: &mut Ray,
     ) -> bool {
         match self {
+            Material::Empty(e) => e.scatter(ray_in, hit_record, attenuation, scattered),
             Material::Light(li) => li.scatter(ray_in, hit_record, attenuation, scattered),
             Material::Lambertian(l) => l.scatter(ray_in, hit_record, attenuation, scattered),
             Material::Metal(metal) => metal.scatter(ray_in, hit_record, attenuation, scattered),
@@ -37,6 +39,16 @@ impl Scatterable for Material {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct Empty {}
+
+impl Scatterable for Empty {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord, attenuation: &mut Vec3d, scattered: &mut Ray) -> bool {
+        false
+    }
+}
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct Light {
@@ -189,10 +201,8 @@ fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
 }
 
 
-
 #[cfg(test)]
 mod test_scatter_fn {
-
     use super::*;
     use assert_approx_eq::assert_approx_eq;
 
@@ -291,5 +301,30 @@ mod test_scatter_fn {
         let result = refract(&v_in, &normal, etai_over_etat);
         assert_eq!(result, expected);
     }
+}
 
+#[cfg(test)]
+mod test_material {
+    use super::*;
+    use crate::vec3d::Vec3d;
+
+    #[test]
+    fn test_empty_material() {
+        let empty = Empty {};
+        let ray_in = Ray::new(
+            Vec3d::zero(),
+            Vec3d::zero(),
+            0.0,
+        );
+        let hit_record = HitRecord::empty();
+        let mut attenuation = Vec3d::zero();
+        let mut scattered = Ray::new(
+            Vec3d::zero(),
+            Vec3d::zero(),
+            0.0,
+        );
+
+        let ret = empty.scatter(&ray_in, &hit_record, &mut attenuation, &mut scattered);
+        assert_eq!(ret, false);
+    }
 }
