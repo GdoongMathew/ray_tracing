@@ -3,6 +3,9 @@ use crate::ray::{Ray, Interval};
 use crate::object::aabb::AABB;
 use super::material::{Material, Empty};
 
+use rand::Rng;
+use std::cmp::Ordering;
+use std::sync::Arc;
 
 
 #[derive(Debug, Clone, Copy)]
@@ -51,7 +54,7 @@ pub trait Hittable: Send + Sync {
 
 
 pub struct HittableVec {
-    pub objects: Vec<Box<dyn Hittable>>,
+    pub objects: Vec<Arc<Box<dyn Hittable>>>,
     bbox: AABB,
 }
 
@@ -63,7 +66,7 @@ impl HittableVec {
         }
     }
 
-    pub fn add(&mut self, object: Box<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<Box<dyn Hittable>>) {
         self.bbox = AABB::surrounding_box(&self.bbox, &object.bounding_box());
         self.objects.push(object);
     }
@@ -90,5 +93,109 @@ impl Hittable for HittableVec {
     fn bounding_box(&self) -> AABB {
         self.bbox.clone()
     }
+}
 
+
+pub struct BVHNode {
+    left: Arc<Box<dyn Hittable>>,
+    right: Arc<Box<dyn Hittable>>,
+    bbox: AABB,
+}
+
+
+impl BVHNode {
+    pub fn from_hittable_vec(hittable_vec: Arc<HittableVec>) -> Self {
+        Self::new(
+            hittable_vec.objects.clone(),
+            0,
+            hittable_vec.objects.len(),
+        )
+    }
+
+    pub fn new(
+        mut hittable_vec: Vec<Arc<Box<dyn Hittable>>>,
+        start: usize,
+        end: usize,
+    ) -> Self {
+        let mut rng = rand::thread_rng();
+        let axis = rng.gen_index(0..3);
+
+        let left: Arc<Box<dyn Hittable>>;
+        let right: Arc<Box<dyn Hittable>>;
+
+        let object_span = end - start;
+
+        match object_span {
+            1 => {
+                left = hittable_vec[start].clone();
+                right = hittable_vec[start].clone();
+            }
+            2 => {
+                left = hittable_vec[start].clone();
+                right = hittable_vec[start + 1].clone();
+            }
+            _ => {
+                hittable_vec.sort_by(|a, b| {
+                    BVHNode::box_compare(a, b, axis)
+                });
+
+                let mid = start + object_span / 2;
+
+                let right_hittable = hittable_vec.drain(mid..end).collect();
+                let left_hittable = hittable_vec.drain(start..mid).collect();
+
+                left = Arc::new(Box::new(BVHNode::new(left_hittable, start - start, mid - start)));
+                right = Arc::new(Box::new(BVHNode::new(right_hittable, mid - mid, end - mid)));
+            }
+        }
+
+        let bbox = AABB::surrounding_box(
+            &left.bounding_box(),
+            &right.bounding_box(),
+        );
+        Self { left, right, bbox }
+    }
+
+    fn box_compare(
+        box_a: &Arc<Box<dyn Hittable>>,
+        box_b: &Arc<Box<dyn Hittable>>,
+        axis: usize,
+    ) -> Ordering {
+        let a_axis_interval = box_a.bounding_box().axis_interval(axis);
+        let b_axis_interval = box_b.bounding_box().axis_interval(axis);
+        a_axis_interval.min.partial_cmp(&b_axis_interval.min).unwrap()
+    }
+}
+
+impl Hittable for BVHNode {
+    fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
+        if self.bbox.hit(ray, interval).is_none() {
+            return None;
+        }
+
+        let hit_left = self.left.hit(ray, interval);
+
+        let mut right_interval = Interval {
+            min: interval.min,
+            max: if hit_left.is_some() { hit_left?.t } else { interval.max },
+        };
+        let hit_right = self.right.hit(ray, &mut right_interval);
+
+        // Return the closest hit if both left and right hits are Some
+        if hit_left.is_some() && hit_right.is_some() {
+            if hit_left?.t < hit_right?.t {
+                hit_left
+            } else {
+                hit_right
+            }
+        } else if hit_left.is_some() {
+            hit_left
+        } else {
+            hit_right
+        }
+    }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox.clone()
+    }
 }

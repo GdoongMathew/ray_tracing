@@ -3,5 +3,5 @@ pub mod sphere;
 pub mod material;
 mod aabb;
 
-pub use hit::{HitRecord, Hittable, HittableVec};
+pub use hit::{HitRecord, Hittable, HittableVec, BVHNode};
 pub use sphere::Sphere;
