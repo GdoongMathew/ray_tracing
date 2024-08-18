@@ -3,6 +3,9 @@ use crate::ray::{Ray, Interval};
 use crate::object::aabb::AABB;
 use super::material::{Material, Empty};
 
+use rand::Rng;
+use std::cmp::Ordering;
+use std::sync::Arc;
 
 
 #[derive(Debug, Clone, Copy)]
@@ -51,7 +54,7 @@ pub trait Hittable: Send + Sync {
 
 
 pub struct HittableVec {
-    pub objects: Vec<Box<dyn Hittable>>,
+    pub objects: Vec<Arc<Box<dyn Hittable>>>,
     bbox: AABB,
 }
 
@@ -63,7 +66,7 @@ impl HittableVec {
         }
     }
 
-    pub fn add(&mut self, object: Box<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<Box<dyn Hittable>>) {
         self.bbox = AABB::surrounding_box(&self.bbox, &object.bounding_box());
         self.objects.push(object);
     }
@@ -93,57 +96,57 @@ impl Hittable for HittableVec {
 }
 
 
-#[derive(Copy, Clone)]
-pub struct BVHNode<'node> {
-    left: &'node Box<dyn Hittable>,
-    right: &'node Box<dyn Hittable>,
+pub struct BVHNode {
+    left: Arc<Box<dyn Hittable>>,
+    right: Arc<Box<dyn Hittable>>,
     bbox: AABB,
 }
 
 
 impl BVHNode {
-    pub fn from_hittable_vec(hittable_vec: &HittableVec) -> Self {
+    pub fn from_hittable_vec(hittable_vec: Arc<HittableVec>) -> Self {
         Self::new(
-            &hittable_vec.objects,
+            hittable_vec.objects.clone(),
             0,
             hittable_vec.objects.len(),
         )
     }
 
     pub fn new(
-        hittable_vec: &Vec<Box<dyn Hittable>>,
+        mut hittable_vec: Vec<Arc<Box<dyn Hittable>>>,
         start: usize,
         end: usize,
     ) -> Self {
         let mut rng = rand::thread_rng();
         let axis = rng.gen_index(0..3);
 
-        let left: &Box<dyn Hittable>;
-        let right: &Box<dyn Hittable>;
+        let left: Arc<Box<dyn Hittable>>;
+        let right: Arc<Box<dyn Hittable>>;
 
         let object_span = end - start;
 
         match object_span {
             1 => {
-                left = &hittable_vec[start];
-                right = &hittable_vec[start];
+                left = hittable_vec[start].clone();
+                right = hittable_vec[start].clone();
             }
             2 => {
-                left = &hittable_vec[start];
-                right = &hittable_vec[start + 1];
+                left = hittable_vec[start].clone();
+                right = hittable_vec[start + 1].clone();
             }
-            3 => {
-                let mut new_hittable = &hittable_vec[start..end].to_vec();
-
-                new_hittable.sort_by(|a, b| {
+            _ => {
+                hittable_vec.sort_by(|a, b| {
                     BVHNode::box_compare(a, b, axis)
                 });
 
                 let mid = start + object_span / 2;
-                left = &Box::new(BVHNode::new(&new_hittable, start, mid));
-                right = &Box::new(BVHNode::new(&new_hittable, mid, end));
+
+                let right_hittable = hittable_vec.drain(mid..end).collect();
+                let left_hittable = hittable_vec.drain(start..mid).collect();
+
+                left = Arc::new(Box::new(BVHNode::new(left_hittable, start - start, mid - start)));
+                right = Arc::new(Box::new(BVHNode::new(right_hittable, mid - mid, end - mid)));
             }
-            _ => panic!("Invalid axis: {}", axis),
         }
 
         let bbox = AABB::surrounding_box(
@@ -154,8 +157,8 @@ impl BVHNode {
     }
 
     fn box_compare(
-        box_a: &Box<dyn Hittable>,
-        box_b: &Box<dyn Hittable>,
+        box_a: &Arc<Box<dyn Hittable>>,
+        box_b: &Arc<Box<dyn Hittable>>,
         axis: usize,
     ) -> Ordering {
         let a_axis_interval = box_a.bounding_box().axis_interval(axis);
