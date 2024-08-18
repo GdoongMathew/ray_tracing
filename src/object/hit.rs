@@ -80,7 +80,7 @@ impl Hittable for HittableVec {
         let mut closest_so_far = interval.max;
 
         for object in self.objects.iter() {
-            if let Some(rec) = object.hit(ray, &Interval{min: interval.min, max: closest_so_far}) {
+            if let Some(rec) = object.hit(ray, &Interval { min: interval.min, max: closest_so_far }) {
                 closest_so_far = rec.t;
                 hit_record = Some(rec);
             }
