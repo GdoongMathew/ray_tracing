@@ -1,4 +1,4 @@
-use crate::ray::{Interval, Ray, EMPTY, UNIVERSE};
+use crate::ray::{Interval, Ray};
 use crate::vec3d::Vec3d;
 
 
@@ -105,12 +105,19 @@ impl AABB {
         }
         true
     }
+
+    pub const EMPTY: AABB = AABB {
+        interval_x: Interval::EMPTY,
+        interval_y: Interval::EMPTY,
+        interval_z: Interval::EMPTY,
+    };
+
+    pub const UNIVERSE: AABB = AABB {
+        interval_x: Interval::UNIVERSE,
+        interval_y: Interval::UNIVERSE,
+        interval_z: Interval::UNIVERSE,
+    };
 }
-
-
-pub static EMPTY_AABB: AABB = AABB::new(EMPTY, EMPTY, EMPTY);
-
-pub static UNIVERSE_AABB: AABB = AABB::new(UNIVERSE, UNIVERSE, UNIVERSE);
 
 
 #[cfg(test)]
@@ -132,10 +139,9 @@ mod test_aabb {
 
     #[test]
     fn test_aabb_empty() {
-        let aabb = AABB::empty();
-        assert_eq!(aabb.interval_x, EMPTY);
-        assert_eq!(aabb.interval_y, EMPTY);
-        assert_eq!(aabb.interval_z, EMPTY);
+        assert_eq!(AABB::EMPTY.interval_x, Interval::EMPTY);
+        assert_eq!(AABB::EMPTY.interval_y, Interval::EMPTY);
+        assert_eq!(AABB::EMPTY.interval_z, Interval::EMPTY);
     }
 
     #[test]

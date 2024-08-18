@@ -31,29 +31,29 @@ fn main() {
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(Vec3d::new(0.0, -1000.0, 0.0), 1000.0, ground))));
 
-    for a in -11..11 {
-        for b in -11..11 {
-            let choose_mat = rand::random::<f64>();
-            let center = Vec3d::new(a as f64 + 0.9 * rand::random::<f64>(), 0.2, b as f64 + 0.9 * rand::random::<f64>());
-            if (center - Vec3d::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let sphere_material: Material;
-                if choose_mat < 0.8 {
-                    let albedo = Vec3d::random() * Vec3d::random();
-                    sphere_material = Material::Lambertian(Lambertian::new(albedo));
-                    let center2 = center + Vec3d::new(0.0, rng.gen_range(0.0..0.5), 0.0);
-                    world.add(Arc::new(Box::new(Sphere::moving_sphere(center, center2, 0.2, sphere_material))));
-                } else if choose_mat < 0.95 {
-                    let albedo = Vec3d::gen_range(0.5, 1.0);
-                    let fuzz = rand::random::<f64>() * 0.5;
-                    sphere_material = Material::Metal(Metal::new(albedo, fuzz));
-                    world.add(Arc::new(Box::new(Sphere::static_sphere(center, 0.2, sphere_material))));
-                } else {
-                    sphere_material = Material::Dielectric(Dielectric::new(1.5));
-                    world.add(Arc::new(Box::new(Sphere::static_sphere(center, 0.2, sphere_material))));
-                }
-            }
-        }
-    }
+    // for a in -11..11 {
+    //     for b in -11..11 {
+    //         let choose_mat = rand::random::<f64>();
+    //         let center = Vec3d::new(a as f64 + 0.9 * rand::random::<f64>(), 0.2, b as f64 + 0.9 * rand::random::<f64>());
+    //         if (center - Vec3d::new(4.0, 0.2, 0.0)).length() > 0.9 {
+    //             let sphere_material: Material;
+    //             if choose_mat < 0.8 {
+    //                 let albedo = Vec3d::random() * Vec3d::random();
+    //                 sphere_material = Material::Lambertian(Lambertian::new(albedo));
+    //                 let center2 = center + Vec3d::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+    //                 world.add(Arc::new(Box::new(Sphere::moving_sphere(center, center2, 0.2, sphere_material))));
+    //             } else if choose_mat < 0.95 {
+    //                 let albedo = Vec3d::gen_range(0.5, 1.0);
+    //                 let fuzz = rand::random::<f64>() * 0.5;
+    //                 sphere_material = Material::Metal(Metal::new(albedo, fuzz));
+    //                 world.add(Arc::new(Box::new(Sphere::static_sphere(center, 0.2, sphere_material))));
+    //             } else {
+    //                 sphere_material = Material::Dielectric(Dielectric::new(1.5));
+    //                 world.add(Arc::new(Box::new(Sphere::static_sphere(center, 0.2, sphere_material))));
+    //             }
+    //         }
+    //     }
+    // }
 
     let material1 = Material::Dielectric(Dielectric::new(1.5));
     world.add(Arc::new(Box::new(Sphere::static_sphere(Vec3d::new(0.0, 1.0, 0.0), 1.0, material1))));

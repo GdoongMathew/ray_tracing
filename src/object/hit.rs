@@ -62,7 +62,7 @@ impl HittableVec {
     pub fn new() -> Self {
         Self {
             objects: Vec::new(),
-            bbox: AABB::empty(),
+            bbox: AABB::EMPTY,
         }
     }
 

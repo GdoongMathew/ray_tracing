@@ -167,10 +167,11 @@ impl Interval {
     pub fn expand(&self, t: f64) -> Interval {
         Interval { min: self.min - t, max: self.max + t }
     }
-}
 
-pub static EMPTY: Interval = Interval { min: f64::INFINITY, max: f64::NEG_INFINITY };
-pub static UNIVERSE: Interval = Interval { min: f64::NEG_INFINITY, max: f64::INFINITY };
+    pub const EMPTY: Interval = Interval { min: f64::INFINITY, max: f64::NEG_INFINITY };
+
+    pub const UNIVERSE: Interval = Interval { min: f64::NEG_INFINITY, max: f64::INFINITY };
+}
 
 
 #[cfg(test)]
@@ -215,13 +216,13 @@ mod test_interval {
 
     #[test]
     fn test_interval_empty() {
-        assert_eq!(EMPTY.min, f64::INFINITY);
-        assert_eq!(EMPTY.max, f64::NEG_INFINITY);
+        assert_eq!(Interval::EMPTY.min, f64::INFINITY);
+        assert_eq!(Interval::EMPTY.max, f64::NEG_INFINITY);
     }
 
     #[test]
     fn test_interval_universe() {
-        assert_eq!(UNIVERSE.min, f64::NEG_INFINITY);
-        assert_eq!(UNIVERSE.max, f64::INFINITY);
+        assert_eq!(Interval::UNIVERSE.min, f64::NEG_INFINITY);
+        assert_eq!(Interval::UNIVERSE.max, f64::INFINITY);
     }
 }
