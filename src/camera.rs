@@ -234,7 +234,7 @@ impl Camera {
         self.center + self.defocus_disk_u() * p.x() + self.defocus_disk_v() * p.y()
     }
 
-    pub fn render(&mut self, world: &'static HittableVec) -> Vec<Vec3d> {
+    pub fn render<H: Hittable>(&mut self, world: &'static H) -> Vec<Vec3d> {
         self.initialize();
 
         let mut image = vec![
