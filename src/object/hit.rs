@@ -178,10 +178,17 @@ impl Hittable for BVHNode {
         };
         let hit_right = self.right.hit(ray, &mut right_interval);
 
-        if hit_left.is_some() || hit_right.is_some() {
-            Some(HitRecord::empty())
+        // Return the closest hit if both left and right hits are Some
+        if hit_left.is_some() && hit_right.is_some() {
+            if hit_left?.t < hit_right?.t {
+                hit_left
+            } else {
+                hit_right
+            }
+        } else if hit_left.is_some() {
+            hit_left
         } else {
-            None
+            hit_right
         }
     }
 
