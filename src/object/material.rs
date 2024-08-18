@@ -6,7 +6,7 @@ use crate::object::hit::HitRecord;
 type Scattered = Option<(Option<Ray>, Vec3d)>;
 
 
-pub trait Scatterable {
+pub trait Scatterable: Send + Sync {
     fn scatter(
         &self,
         ray_in: &Ray,
