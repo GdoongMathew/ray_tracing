@@ -2,8 +2,7 @@ use crate::vec3d::{Vec3d, dot};
 use crate::ray::{Ray, Interval};
 use crate::object::aabb::AABB;
 use super::material::{Material, Empty};
-use rand::Rng;
-use std::cmp::Ordering;
+
 
 
 #[derive(Debug, Clone, Copy)]
