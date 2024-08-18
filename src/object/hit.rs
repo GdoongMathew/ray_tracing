@@ -117,8 +117,13 @@ impl BVHNode {
         start: usize,
         end: usize,
     ) -> Self {
-        let mut rng = rand::thread_rng();
-        let axis = rng.gen_index(0..3);
+
+        // Sort the hittable objects along the longest axis of the bounding box
+        let mut bbox = AABB::EMPTY;
+        for i in start..end {
+            bbox = AABB::surrounding_box(&bbox, &hittable_vec[i].bounding_box());
+        }
+        let axis = bbox.longest_axis();
 
         let left: Arc<Box<dyn Hittable>>;
         let right: Arc<Box<dyn Hittable>>;
@@ -149,10 +154,6 @@ impl BVHNode {
             }
         }
 
-        let bbox = AABB::surrounding_box(
-            &left.bounding_box(),
-            &right.bounding_box(),
-        );
         Self { left, right, bbox }
     }
 
@@ -169,7 +170,7 @@ impl BVHNode {
 
 impl Hittable for BVHNode {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
-        if self.bbox.hit(ray, interval) {
+        if !self.bbox.hit(ray, interval) {
             return None;
         }
 
