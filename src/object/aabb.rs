@@ -106,6 +106,20 @@ impl AABB {
         true
     }
 
+    pub fn longest_axis(&self) -> usize {
+        let x_size = self.interval_x.size();
+        let y_size = self.interval_y.size();
+        let z_size = self.interval_z.size();
+
+        if x_size > y_size && x_size > z_size {
+            0
+        } else if y_size > z_size {
+            1
+        } else {
+            2
+        }
+    }
+
     pub const EMPTY: AABB = AABB {
         interval_x: Interval::EMPTY,
         interval_y: Interval::EMPTY,
@@ -192,5 +206,35 @@ mod test_aabb {
         assert_eq!(aabb.axis_interval(0), Interval { min: 1.0, max: 2.0 });
         assert_eq!(aabb.axis_interval(1), Interval { min: 3.0, max: 4.0 });
         assert_eq!(aabb.axis_interval(2), Interval { min: 5.0, max: 6.0 });
+    }
+
+    #[test]
+    fn test_aabb_longest_axis_x() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 3.0 },
+            Interval { min: 3.0, max: 4.0 },
+            Interval { min: 5.0, max: 6.0 },
+        );
+        assert_eq!(aabb.longest_axis(), 0);
+    }
+
+    #[test]
+    fn test_aabb_longest_axis_y() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 2.0 },
+            Interval { min: 3.0, max: 5.0 },
+            Interval { min: 5.0, max: 6.0 },
+        );
+        assert_eq!(aabb.longest_axis(), 1);
+    }
+
+    #[test]
+    fn test_aabb_longest_axis_z() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 2.0 },
+            Interval { min: 3.0, max: 4.0 },
+            Interval { min: 5.0, max: 7.0 },
+        );
+        assert_eq!(aabb.longest_axis(), 2);
     }
 }
