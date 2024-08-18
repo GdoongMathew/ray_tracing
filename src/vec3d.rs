@@ -378,7 +378,9 @@ impl Sub<f64> for Vec3d {
 /// ```
 impl Sub<Vec3d> for f64 {
     type Output = Vec3d;
-    fn sub(self, rhs: Vec3d) -> Self::Output { rhs - self }
+    fn sub(self, rhs: Vec3d) -> Self::Output {
+        Vec3d::new(self - rhs.x(), self - rhs.y(), self - rhs.z())
+    }
 }
 
 /// SubAssign overloading for Vec3d
