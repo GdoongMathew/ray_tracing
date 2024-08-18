@@ -189,14 +189,11 @@ impl Camera {
         if depth <= 0 { return Vec3d::zero(); }
 
         if let Some(hit_record) = world.hit(ray, &Interval { min: 0.0001, max: f64::INFINITY }) {
-            let mut scatter = Ray::default();
-            let mut attenuation = Vec3d::zero();
-
-            return if hit_record.material.scatter(ray, &hit_record, &mut attenuation, &mut scatter) {
-                attenuation * Self::ray_color(&scatter, world, depth - 1)
-            } else {
-                Vec3d::zero()
-            };
+            let scattered = hit_record.material.scatter(ray, &hit_record);
+            if let Some((scattered_ray, color)) = scattered {
+                return color * Self::ray_color(&scattered_ray.unwrap(), world, depth - 1);
+            }
+            return Vec3d::zero();
         }
 
         let unit_direction = ray.direction.unit_vector();
