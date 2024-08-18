@@ -91,5 +91,102 @@ impl Hittable for HittableVec {
     fn bounding_box(&self) -> AABB {
         self.bbox.clone()
     }
+}
 
+
+#[derive(Copy, Clone)]
+pub struct BVHNode<'node> {
+    left: &'node Box<dyn Hittable>,
+    right: &'node Box<dyn Hittable>,
+    bbox: AABB,
+}
+
+
+impl BVHNode {
+    pub fn from_hittable_vec(hittable_vec: &HittableVec) -> Self {
+        Self::new(
+            &hittable_vec.objects,
+            0,
+            hittable_vec.objects.len(),
+        )
+    }
+
+    pub fn new(
+        hittable_vec: &Vec<Box<dyn Hittable>>,
+        start: usize,
+        end: usize,
+    ) -> Self {
+        let mut rng = rand::thread_rng();
+        let axis = rng.gen_index(0..3);
+
+        let left: &Box<dyn Hittable>;
+        let right: &Box<dyn Hittable>;
+
+        let object_span = end - start;
+
+        match object_span {
+            1 => {
+                left = &hittable_vec[start];
+                right = &hittable_vec[start];
+            }
+            2 => {
+                left = &hittable_vec[start];
+                right = &hittable_vec[start + 1];
+            }
+            3 => {
+                let mut new_hittable = &hittable_vec[start..end].to_vec();
+
+                new_hittable.sort_by(|a, b| {
+                    BVHNode::box_compare(a, b, axis)
+                });
+
+                let mid = start + object_span / 2;
+                left = &Box::new(BVHNode::new(&new_hittable, start, mid));
+                right = &Box::new(BVHNode::new(&new_hittable, mid, end));
+            }
+            _ => panic!("Invalid axis: {}", axis),
+        }
+
+        let bbox = AABB::surrounding_box(
+            &left.bounding_box(),
+            &right.bounding_box(),
+        );
+        Self { left, right, bbox }
+    }
+
+    fn box_compare(
+        box_a: &Box<dyn Hittable>,
+        box_b: &Box<dyn Hittable>,
+        axis: usize,
+    ) -> Ordering {
+        let a_axis_interval = box_a.bounding_box().axis_interval(axis);
+        let b_axis_interval = box_b.bounding_box().axis_interval(axis);
+        a_axis_interval.min.partial_cmp(&b_axis_interval.min).unwrap()
+    }
+}
+
+impl Hittable for BVHNode {
+    fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
+        if self.bbox.hit(ray, interval).is_none() {
+            return None;
+        }
+
+        let hit_left = self.left.hit(ray, interval);
+
+        let mut right_interval = Interval {
+            min: interval.min,
+            max: if hit_left.is_some() { hit_left?.t } else { interval.max },
+        };
+        let hit_right = self.right.hit(ray, &mut right_interval);
+
+        if hit_left.is_some() || hit_right.is_some() {
+            Some(HitRecord::empty())
+        } else {
+            None
+        }
+    }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox.clone()
+    }
 }
