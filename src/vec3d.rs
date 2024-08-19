@@ -439,6 +439,14 @@ impl Mul<Vec3d> for Vec3d {
     }
 }
 
+/// Overloading for multiplying a Vec3d with a scalar
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let vec = Vec3d::new(1.0, 2.0, 3.0);
+/// let result = vec * 2.0;
+/// assert_eq!(result, Vec3d::new(2.0, 4.0, 6.0));
+/// ```
 impl Mul<f64> for Vec3d {
     type Output = Self;
 
@@ -446,6 +454,23 @@ impl Mul<f64> for Vec3d {
         Self {
             vector: (self.x() * rhs, self.y() * rhs, self.z() * rhs)
         }
+    }
+}
+
+
+/// Overloading for multiplying a scalar with a Vec3d
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let vec = Vec3d::new(1.0, 2.0, 3.0);
+/// let result = 2.0 * vec;
+/// assert_eq!(result, Vec3d::new(2.0, 4.0, 6.0));
+/// ```
+impl Mul<Vec3d> for f64 {
+    type Output = Vec3d;
+
+    fn mul(self, rhs: Vec3d) -> Self::Output {
+        rhs * self
     }
 }
 
@@ -696,6 +721,13 @@ mod vec3d_tests {
     fn test_vec3d_mul_f64() {
         let vec = Vec3d::new(1.0, 2.0, 3.0);
         let result = vec * 2.0;
+        assert_eq!(result, Vec3d::new(2.0, 4.0, 6.0));
+    }
+
+    #[test]
+    fn test_f64_mul_vec3d() {
+        let vec = Vec3d::new(1.0, 2.0, 3.0);
+        let result = 2.0 * vec;
         assert_eq!(result, Vec3d::new(2.0, 4.0, 6.0));
     }
 
