@@ -2,11 +2,11 @@ use crate::vec3d::Vec3d;
 use std::sync::Arc;
 
 
-pub trait Texture: Send + Sync {
+pub trait Texture: Send + Sync + Copy {
     fn value(&self, u: f64, v: f64, p: &Vec3d) -> Vec3d;
 }
 
-
+#[derive(Clone, Copy)]
 pub struct SolidColor {
     color: Vec3d,
 }
@@ -24,6 +24,7 @@ impl Texture for SolidColor {
 }
 
 
+#[derive(Clone, Copy)]
 pub struct Checker {
     inv_scale: f64,
     even: Arc<Box<dyn Texture>>,

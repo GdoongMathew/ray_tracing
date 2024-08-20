@@ -3,6 +3,7 @@ use ray_tracing::camera::Camera;
 use ray_tracing::object::{Sphere, HittableVec, BVHNode};
 use ray_tracing::image::write_image;
 use ray_tracing::object::material::{Material, Lambertian, Metal, Dielectric};
+use ray_tracing::object::texture::Checker;
 
 use rand::Rng;
 use std::time::Instant;
@@ -15,7 +16,7 @@ fn main() {
     camera.set_depth(50);
     camera.set_aspect_ratio(16.0 / 9.0);
     camera.set_resolution_width(1080);
-    camera.set_samples_per_pixel(100);
+    camera.set_samples_per_pixel(500);
     camera.set_v_fov(20.0);
 
     camera.set_look_from(Vec3d::new(13.0, 2.0, 3.0));
@@ -27,7 +28,13 @@ fn main() {
 
     let mut world = HittableVec::new();
 
-    let ground = Material::Lambertian(Lambertian::new(Vec3d::new(0.5, 0.5, 0.5)));
+    let checker = Checker::from_color(
+        Vec3d::new(0.2, 0.3, 0.1),
+        Vec3d::new(0.9, 0.9, 0.9),
+        0.32,
+    );
+
+    let ground = Material::Lambertian(Lambertian::from_texture(Box::new(checker)));
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(Vec3d::new(0.0, -1000.0, 0.0), 1000.0, ground))));
 

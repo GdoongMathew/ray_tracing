@@ -24,9 +24,11 @@ pub struct HitRecord<'m> {
 }
 
 impl<'m> HitRecord<'m> {
-    pub fn new(material: &'m Material, t: f64, point: Vec3d) -> Self {
+    pub fn new(material: &'m Material, t: f64, u: f64, v: f64, point: Vec3d) -> Self {
         Self {
             t,
+            u,
+            v,
             point,
             normal: Vec3d::zero(),
             front_face: false,
@@ -39,6 +41,8 @@ impl<'m> HitRecord<'m> {
     pub fn empty() -> Self {
         Self::new(
             &Material::Empty(Empty {}),
+            0.0,
+            0.0,
             0.0,
             Vec3d::zero(),
         )
