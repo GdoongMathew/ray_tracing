@@ -18,10 +18,10 @@ fn main() {
     camera.set_look_at(Vec3d::new(0.0, 0.0, 0.0));
     camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
 
-    camera.set_defocus_angle(0.6);
-    camera.set_focus_dist(10.0);
+    camera.set_defocus_angle(0.0);
+    // camera.set_focus_dist(10.0);
 
-    let world: BVHNode = scene::bouncing_balls();
+    let world: BVHNode = scene::checkered_spheres();
     let world_ref: &'static BVHNode = Box::leak(Box::new(world));
 
     let now = Instant::now();
