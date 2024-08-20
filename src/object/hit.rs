@@ -7,10 +7,15 @@ use rand::Rng;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
+use std::default::Default;
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct HitRecord<'m> {
     pub t: f64,
+    pub u: f64,
+    pub v: f64,
+
     pub point: Vec3d,
     pub normal: Vec3d,
     pub front_face: bool,
