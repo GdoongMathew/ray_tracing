@@ -17,7 +17,7 @@ pub trait Scatterable: Send + Sync {
     ) -> Scattered;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Material {
     Empty(Empty),
     Light(Light),
@@ -42,7 +42,7 @@ impl Scatterable for Material {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Empty {}
 
 impl Scatterable for Empty {
@@ -56,7 +56,7 @@ impl Scatterable for Empty {
 }
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Light {
     color: Vec3d,
 }
@@ -77,16 +77,15 @@ impl Scatterable for Light {
     ) -> Scattered { Some((None, Vec3d::new(1.0, 1.0, 1.0))) }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Lambertian {
     texture: Arc<Box<dyn Texture>>,
-    // albedo: Vec3d,
 }
 
 impl Lambertian {
     pub fn new(albedo: Vec3d) -> Self {
-        let texture = Arc::new(Box::new(SolidColor::new(albedo)));
-        Self { texture }
+        let texture = Box::new(SolidColor::new(albedo));
+        Self::from_texture(texture)
     }
 
     pub fn from_texture(texture: Box<dyn Texture>) -> Self {
@@ -113,7 +112,7 @@ impl Scatterable for Lambertian {
 }
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Metal {
     albedo: Vec3d,
     fuss: f64,
@@ -149,7 +148,7 @@ fn reflect(v_in: &Vec3d, normal: &Vec3d) -> Vec3d {
 }
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Dielectric {
     refraction_index: f64,
 }
