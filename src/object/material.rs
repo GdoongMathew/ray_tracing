@@ -3,6 +3,9 @@ use crate::vec3d::{Vec3d, dot};
 use crate::ray::Ray;
 use crate::object::hit::HitRecord;
 
+use std::sync::Arc;
+use crate::object::texture::{Texture, SolidColor};
+
 type Scattered = Option<(Option<Ray>, Vec3d)>;
 
 
@@ -76,12 +79,18 @@ impl Scatterable for Light {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Lambertian {
-    albedo: Vec3d,
+    texture: Arc<Box<dyn Texture>>,
+    // albedo: Vec3d,
 }
 
 impl Lambertian {
     pub fn new(albedo: Vec3d) -> Self {
-        Self { albedo }
+        let texture = Arc::new(Box::new(SolidColor::new(albedo)));
+        Self { texture }
+    }
+
+    pub fn from_texture(texture: Box<dyn Texture>) -> Self {
+        Self { texture: Arc::new(texture) }
     }
 }
 
@@ -97,7 +106,9 @@ impl Scatterable for Lambertian {
         if scatter_direction.near_zero() {
             scatter_direction.clone_from(&hit_record.normal);
         }
-        Some((Some(Ray::new(hit_record.point, scatter_direction, ray_in.time)), self.albedo))
+
+        let attenuation = self.texture.value(hit_record.u, hit_record.v, &hit_record.point);
+        Some((Some(Ray::new(hit_record.point, scatter_direction, ray_in.time)), attenuation))
     }
 }
 
