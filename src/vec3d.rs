@@ -5,7 +5,7 @@ use rand::distr::{Distribution, Standard};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3d {
-    vector: (f64, f64, f64),
+    vector: [f64; 3],
 }
 
 /// Implementation of ``Vec3d``
@@ -28,7 +28,7 @@ pub struct Vec3d {
 impl Vec3d {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self {
-            vector: (x, y, z)
+            vector: [x, y, z],
         }
     }
 
@@ -40,16 +40,14 @@ impl Vec3d {
     /// assert_eq!(vec, Vec3d::new(0.0, 0.0, 0.0));
     /// ```
     pub fn zero() -> Self {
-        Self {
-            vector: (0.0, 0.0, 0.0)
-        }
+        Self::new(0.0, 0.0, 0.0)
     }
 
-    pub fn x(&self) -> f64 { self.vector.0 }
+    pub fn x(&self) -> f64 { self.vector[0] }
 
-    pub fn y(&self) -> f64 { self.vector.1 }
+    pub fn y(&self) -> f64 { self.vector[1] }
 
-    pub fn z(&self) -> f64 { self.vector.2 }
+    pub fn z(&self) -> f64 { self.vector[2] }
 
     /// Returns the length of the vector
     /// # Examples
@@ -58,7 +56,7 @@ impl Vec3d {
     /// let vec = Vec3d::new(1.0, 2.0, 3.0);
     /// assert_eq!(vec.length(), 3.7416573867739413);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
@@ -70,7 +68,7 @@ impl Vec3d {
     /// let vec = Vec3d::new(1.0, 2.0, 3.0);
     /// assert_eq!(vec.length_squared(), 14.0);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn length_squared(&self) -> f64 {
         self.x().powi(2) + self.y().powi(2) + self.z().powi(2)
     }
@@ -83,7 +81,7 @@ impl Vec3d {
     /// let result = vec.unit_vector();
     /// assert_eq!(result, Vec3d::new(0.2672612419124244, 0.5345224838248488, 0.8017837257372732));
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn unit_vector(&self) -> Self {
         *self / self.length()
     }
@@ -124,6 +122,29 @@ impl Vec3d {
         self.x().abs() < f64::EPSILON &&
             self.y().abs() < f64::EPSILON &&
             self.z().abs() < f64::EPSILON
+    }
+
+    #[inline]
+    fn zip_with(
+        &self,
+        other: &Vec3d,
+        mut f: impl FnMut(f64, f64) -> f64,
+    ) -> Self {
+        Vec3d::new(
+            f(self.x(), other.x()),
+            f(self.y(), other.y()),
+            f(self.z(), other.z()),
+        )
+    }
+
+    #[inline]
+    pub fn reduce(&self, f: impl Fn(f64, f64) -> f64) -> f64 {
+        f(f(self.x(), self.y()), self.z())
+    }
+
+    #[inline]
+    pub fn map(&self, f: impl Fn(f64) -> f64) -> Self {
+        Vec3d::new(f(self.x()), f(self.y()), f(self.z()))
     }
 }
 
@@ -168,9 +189,9 @@ impl std::fmt::Display for Vec3d {
 /// let result = dot(&vec, &vec2);
 /// assert_eq!(result, 32.0);
 /// ```
-#[inline(always)]
+#[inline]
 pub fn dot(v1: &Vec3d, v2: &Vec3d) -> f64 {
-    v1.x() * v2.x() + v1.y() * v2.y() + v1.z() * v2.z()
+    v1.zip_with(v2, Mul::mul).reduce(Add::add)
 }
 
 
@@ -183,6 +204,7 @@ pub fn dot(v1: &Vec3d, v2: &Vec3d) -> f64 {
 /// let result = distance(&vec, &vec2);
 /// assert_eq!(result, 5.0);
 /// ```
+#[inline]
 pub fn distance<'a>(v1: &'a Vec3d, v2: &'a Vec3d) -> f64 {
     (*v1 - *v2).length()
 }
@@ -197,7 +219,7 @@ pub fn distance<'a>(v1: &'a Vec3d, v2: &'a Vec3d) -> f64 {
 /// let result = cross(&vec, &vec2);
 /// assert_eq!(result, Vec3d::new(0.0, 0.0, 1.0));
 /// ```
-#[inline(always)]
+#[inline]
 pub fn cross(v1: &Vec3d, v2: &Vec3d) -> Vec3d {
     Vec3d::new(
         v1.y() * v2.z() - v1.z() * v2.y(),
@@ -218,10 +240,9 @@ impl Neg for Vec3d {
     /// let result = -vec;
     /// assert_eq!(result, Vec3d::new(-1.0, -2.0, -3.0));
     /// ```
+    #[inline]
     fn neg(self) -> Self::Output {
-        Self {
-            vector: (-self.x(), -self.y(), -self.z())
-        }
+        self.map(Neg::neg)
     }
 }
 
@@ -244,14 +265,9 @@ impl Neg for Vec3d {
 impl Add<Vec3d> for Vec3d {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
-        Self {
-            vector: (
-                self.x() + rhs.x(),
-                self.y() + rhs.y(),
-                self.z() + rhs.z()
-            )
-        }
+        self.zip_with(&rhs, Add::add)
     }
 }
 
@@ -266,10 +282,9 @@ impl Add<Vec3d> for Vec3d {
 impl Add<f64> for Vec3d {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: f64) -> Self::Output {
-        Self {
-            vector: (self.x() + rhs, self.y() + rhs, self.z() + rhs)
-        }
+        self.map(|x| x + rhs)
     }
 }
 
@@ -284,6 +299,7 @@ impl Add<f64> for Vec3d {
 impl Add<Vec3d> for f64 {
     type Output = Vec3d;
 
+    #[inline]
     fn add(self, rhs: Vec3d) -> Self::Output {
         rhs + self
     }
@@ -306,17 +322,17 @@ impl Add<Vec3d> for f64 {
 /// ```
 impl AddAssign<Vec3d> for Vec3d {
     fn add_assign(&mut self, rhs: Self) {
-        self.vector.0 += rhs.x();
-        self.vector.1 += rhs.y();
-        self.vector.2 += rhs.z();
+        self.vector[0] += rhs.x();
+        self.vector[1] += rhs.y();
+        self.vector[2] += rhs.z();
     }
 }
 
 impl AddAssign<f64> for Vec3d {
     fn add_assign(&mut self, rhs: f64) {
-        self.vector.0 += rhs;
-        self.vector.1 += rhs;
-        self.vector.2 += rhs;
+        self.vector[0] += rhs;
+        self.vector[1] += rhs;
+        self.vector[2] += rhs;
     }
 }
 
@@ -339,13 +355,9 @@ impl AddAssign<f64> for Vec3d {
 /// ```
 impl Sub<Vec3d> for Vec3d {
     type Output = Self;
+    #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
-        Self {
-            vector: (
-                self.x() - rhs.x(),
-                self.y() - rhs.y(),
-                self.z() - rhs.z())
-        }
+        self.zip_with(&rhs, Sub::sub)
     }
 }
 
@@ -360,10 +372,9 @@ impl Sub<Vec3d> for Vec3d {
 /// ```
 impl Sub<f64> for Vec3d {
     type Output = Self;
+    #[inline]
     fn sub(self, rhs: f64) -> Self::Output {
-        Self {
-            vector: (self.x() - rhs, self.y() - rhs, self.z() - rhs)
-        }
+        self.map(|x| x - rhs)
     }
 }
 
@@ -378,8 +389,9 @@ impl Sub<f64> for Vec3d {
 /// ```
 impl Sub<Vec3d> for f64 {
     type Output = Vec3d;
+    #[inline]
     fn sub(self, rhs: Vec3d) -> Self::Output {
-        Vec3d::new(self - rhs.x(), self - rhs.y(), self - rhs.z())
+        -rhs + self
     }
 }
 
@@ -400,17 +412,17 @@ impl Sub<Vec3d> for f64 {
 /// ```
 impl SubAssign<Vec3d> for Vec3d {
     fn sub_assign(&mut self, rhs: Self) {
-        self.vector.0 -= rhs.x();
-        self.vector.1 -= rhs.y();
-        self.vector.2 -= rhs.z();
+        self.vector[0] -= rhs.x();
+        self.vector[1] -= rhs.y();
+        self.vector[2] -= rhs.z();
     }
 }
 
 impl SubAssign<f64> for Vec3d {
     fn sub_assign(&mut self, rhs: f64) {
-        self.vector.0 -= rhs;
-        self.vector.1 -= rhs;
-        self.vector.2 -= rhs;
+        self.vector[0] -= rhs;
+        self.vector[1] -= rhs;
+        self.vector[2] -= rhs;
     }
 }
 
@@ -432,10 +444,9 @@ impl SubAssign<f64> for Vec3d {
 /// ```
 impl Mul<Vec3d> for Vec3d {
     type Output = Self;
+    #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
-        Self {
-            vector: (self.x() * rhs.x(), self.y() * rhs.y(), self.z() * rhs.z())
-        }
+        self.zip_with(&rhs, Mul::mul)
     }
 }
 
@@ -450,10 +461,9 @@ impl Mul<Vec3d> for Vec3d {
 impl Mul<f64> for Vec3d {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rhs: f64) -> Self::Output {
-        Self {
-            vector: (self.x() * rhs, self.y() * rhs, self.z() * rhs)
-        }
+        self.map(|x| x * rhs)
     }
 }
 
@@ -469,9 +479,8 @@ impl Mul<f64> for Vec3d {
 impl Mul<Vec3d> for f64 {
     type Output = Vec3d;
 
-    fn mul(self, rhs: Vec3d) -> Self::Output {
-        rhs * self
-    }
+    #[inline]
+    fn mul(self, rhs: Vec3d) -> Self::Output { rhs * self }
 }
 
 
@@ -492,17 +501,17 @@ impl Mul<Vec3d> for f64 {
 /// ```
 impl MulAssign<Vec3d> for Vec3d {
     fn mul_assign(&mut self, rhs: Self) {
-        self.vector.0 *= rhs.x();
-        self.vector.1 *= rhs.y();
-        self.vector.2 *= rhs.z();
+        self.vector[0] *= rhs.x();
+        self.vector[1] *= rhs.y();
+        self.vector[2] *= rhs.z();
     }
 }
 
 impl MulAssign<f64> for Vec3d {
     fn mul_assign(&mut self, rhs: f64) {
-        self.vector.0 *= rhs;
-        self.vector.1 *= rhs;
-        self.vector.2 *= rhs;
+        self.vector[0] *= rhs;
+        self.vector[1] *= rhs;
+        self.vector[2] *= rhs;
     }
 }
 
@@ -524,19 +533,17 @@ impl MulAssign<f64> for Vec3d {
 /// ```
 impl Div<Vec3d> for Vec3d {
     type Output = Self;
+    #[inline]
     fn div(self, rhs: Self) -> Self::Output {
-        Self {
-            vector: (self.x() / rhs.x(), self.y() / rhs.y(), self.z() / rhs.z())
-        }
+        self.zip_with(&rhs, Div::div)
     }
 }
 
 impl Div<f64> for Vec3d {
     type Output = Self;
 
-    fn div(self, rhs: f64) -> Self::Output {
-        return self * (1.0 / rhs);
-    }
+    #[inline]
+    fn div(self, rhs: f64) -> Self::Output { self * (1.0 / rhs) }
 }
 
 
@@ -557,9 +564,9 @@ impl Div<f64> for Vec3d {
 /// ```
 impl DivAssign<Vec3d> for Vec3d {
     fn div_assign(&mut self, rhs: Self) {
-        self.vector.0 /= rhs.x();
-        self.vector.1 /= rhs.y();
-        self.vector.2 /= rhs.z();
+        self.vector[0] /= rhs.x();
+        self.vector[1] /= rhs.y();
+        self.vector[2] /= rhs.z();
     }
 }
 
