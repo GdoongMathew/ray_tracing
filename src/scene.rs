@@ -9,15 +9,13 @@ pub fn bouncing_balls() -> BVHNode {
     let mut rng = rand::thread_rng();
     let mut world = HittableVec::new();
 
-    let checker: Box<dyn Texture> = Box::new(Checker::from_color(
+    let checker: Arc<Box<dyn Texture>> = Arc::new(Box::new(Checker::from_color(
         Vec3d::new(0.2, 0.3, 0.1),
         Vec3d::new(0.9, 0.9, 0.9),
         0.32,
-    ));
+    )));
 
-    let checker_arc = Arc::new(checker);
-
-    let ground = Material::Lambertian(Lambertian::from_texture(checker_arc.clone()));
+    let ground = Material::Lambertian(Lambertian::from_texture(checker.clone()));
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(Vec3d::new(0.0, -1000.0, 0.0), 1000.0, ground))));
 

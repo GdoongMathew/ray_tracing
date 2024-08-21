@@ -40,9 +40,7 @@ pub struct Checker {
 }
 
 impl Checker {
-    pub fn new(even: Box<dyn Texture>, odd: Box<dyn Texture>, scale: f64) -> Self {
-        let even = Arc::new(even);
-        let odd = Arc::new(odd);
+    pub fn new(even: Arc<Box<dyn Texture>>, odd: Arc<Box<dyn Texture>>, scale: f64) -> Self {
         Self {
             inv_scale: 1.0 / scale,
             even,
@@ -51,9 +49,11 @@ impl Checker {
     }
 
     pub fn from_color(color1: Vec3d, color2: Vec3d, scale: f64) -> Self {
+        let even: Arc<Box<dyn Texture>> = Arc::new(Box::new(SolidColor::new(color1)));
+        let odd: Arc<Box<dyn Texture>> = Arc::new(Box::new(SolidColor::new(color2)));
         Self::new(
-            Box::new(SolidColor::new(color1)),
-            Box::new(SolidColor::new(color2)),
+            even,
+            odd,
             scale,
         )
     }
