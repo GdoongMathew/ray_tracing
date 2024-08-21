@@ -84,12 +84,12 @@ pub struct Lambertian {
 
 impl Lambertian {
     pub fn new(albedo: Vec3d) -> Self {
-        let texture = Box::new(SolidColor::new(albedo));
+        let texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(SolidColor::new(albedo)));
         Self::from_texture(texture)
     }
 
-    pub fn from_texture(texture: Box<dyn Texture>) -> Self {
-        Self { texture: Arc::new(texture) }
+    pub fn from_texture(texture: Arc<Box<dyn Texture>>) -> Self {
+        Self { texture }
     }
 }
 

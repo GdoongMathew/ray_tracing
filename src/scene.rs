@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use crate::object::{BVHNode, HittableVec, Sphere};
 use crate::object::material::{Dielectric, Lambertian, Material, Metal};
-use crate::object::texture::Checker;
+use crate::object::texture::{Texture, Checker};
 use crate::vec3d::Vec3d;
 use rand::Rng;
 
@@ -9,13 +9,15 @@ pub fn bouncing_balls() -> BVHNode {
     let mut rng = rand::thread_rng();
     let mut world = HittableVec::new();
 
-    let checker = Box::new(Checker::from_color(
+    let checker: Box<dyn Texture> = Box::new(Checker::from_color(
         Vec3d::new(0.2, 0.3, 0.1),
         Vec3d::new(0.9, 0.9, 0.9),
         0.32,
     ));
 
-    let ground = Material::Lambertian(Lambertian::from_texture(checker));
+    let checker_arc = Arc::new(checker);
+
+    let ground = Material::Lambertian(Lambertian::from_texture(checker_arc.clone()));
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(Vec3d::new(0.0, -1000.0, 0.0), 1000.0, ground))));
 
@@ -59,24 +61,26 @@ pub fn bouncing_balls() -> BVHNode {
 pub fn checkered_spheres() -> BVHNode {
     let mut world = HittableVec::new();
 
-    let checker = Box::new(Checker::from_color(
+    let checker: Box<dyn Texture> = Box::new(Checker::from_color(
         Vec3d::new(0.2, 0.3, 0.1),
         Vec3d::new(0.9, 0.9, 0.9),
         0.32,
     ));
 
+    let arc_checker = Arc::new(checker);
+
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(
             Vec3d::new(0.0, -10.0, 0.0),
             10.0,
-            Material::Lambertian(Lambertian::from_texture(checker.clone())))))
+            Material::Lambertian(Lambertian::from_texture(arc_checker.clone())))))
     );
 
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(
             Vec3d::new(0.0, 10.0, 0.0),
             10.0,
-            Material::Lambertian(Lambertian::from_texture(checker.clone())))))
+            Material::Lambertian(Lambertian::from_texture(arc_checker.clone())))))
     );
 
     BVHNode::from_hittable_vec(Arc::new(world))
