@@ -68,6 +68,15 @@ impl Sphere {
         // If the sphere is not moving, the center is the same.
         self.center + self.center_vec * time
     }
+
+    fn get_sphere_uv(point: &Vec3d) -> (f64, f64) {
+        let theta = (-point.y()).acos();
+        let phi = -point.z().atan2(point.x()) + std::f64::consts::PI;
+
+        let u = phi / (2.0 * std::f64::consts::PI);
+        let v = theta / std::f64::consts::PI;
+        (u, v)
+    }
 }
 
 impl Hittable for Sphere {
@@ -100,8 +109,10 @@ impl Hittable for Sphere {
             }
         }
 
-        let mut rec = HitRecord::new(&self.material, root, 0.0, 0.0, ray.at(root));
-        let outward_normal = (rec.point - self.center) / self.radius;
+        let point = ray.at(root);
+        let outward_normal = (point - center) / self.radius;
+        let (u, v) = Sphere::get_sphere_uv(&outward_normal);
+        let mut rec = HitRecord::new(&self.material, root, u, v, point);
         rec.set_face_normal(ray, outward_normal);
         Some(rec)
     }
