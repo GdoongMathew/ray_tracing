@@ -102,9 +102,9 @@ impl Hittable for Sphere {
 
         // Find the nearest root that lies in the acceptable range.
         let mut root = (h - sqrt_disc) / a;
-        if !(interval.surrounds(root)) {
+        if !interval.surrounds(root) {
             root = (h + sqrt_disc) / a;
-            if !(interval.surrounds(root)) {
+            if !interval.surrounds(root) {
                 return None;
             }
         }
