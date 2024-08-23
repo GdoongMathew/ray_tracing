@@ -1,7 +1,7 @@
 use std::sync::Arc;
-use crate::object::{BVHNode, HittableVec, Sphere};
+use crate::object::{BVHNode, Hittable, HittableVec, Sphere};
 use crate::object::material::{Dielectric, Lambertian, Material, Metal};
-use crate::object::texture::{Texture, Checker};
+use crate::object::texture::{Texture, Checker, ImageTexture};
 use crate::vec3d::Vec3d;
 use rand::Rng;
 
@@ -81,5 +81,21 @@ pub fn checkered_spheres() -> BVHNode {
             Material::Lambertian(Lambertian::from_texture(arc_checker.clone())))))
     );
 
+    BVHNode::from_hittable_vec(Arc::new(world))
+}
+
+
+pub fn earth() -> BVHNode {
+    let mut world = HittableVec::new();
+
+    let image_file = "./misc/earthmap.jpg".to_string();
+    let earth_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(ImageTexture::new(&image_file)));
+
+    world.add(
+        Arc::new(Box::new(Sphere::static_sphere(
+            Vec3d::new(0.0, 0.0, 0.0),
+        2.0,
+            Material::Lambertian(Lambertian::from_texture(earth_texture)))
+    )));
     BVHNode::from_hittable_vec(Arc::new(world))
 }

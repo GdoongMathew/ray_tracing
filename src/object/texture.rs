@@ -3,7 +3,7 @@ use std::sync::Arc;
 use image;
 
 use std::fmt::{Debug, Formatter};
-use image::Pixel;
+use image::{GenericImageView, Pixel};
 use crate::ray::Interval;
 
 
@@ -87,18 +87,18 @@ impl Texture for Checker {
 }
 
 
-struct ImageTexture {
+pub struct ImageTexture {
     file: String,
-    image: image::RgbImage,
+    image: image::DynamicImage,
 }
 
 
 impl ImageTexture {
     pub fn new(file: &String) -> Self {
-        let image = image::ImageReader::new(file).decode();
+        let image = image::open(file);
         match image {
-            Ok(image) => Self { image: image.to_rgb8(), file: file.clone() },
-            Err(e) => panic!("Error reading image file {}: {}", file, e),
+            Ok(image) => Self { file: file.clone(), image },
+            Err(e) => panic!("Could not open image file {}: {}", file, e),
         }
     }
 }
