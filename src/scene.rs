@@ -1,7 +1,7 @@
 use std::sync::Arc;
-use crate::object::{BVHNode, Hittable, HittableVec, Sphere};
+use crate::object::{BVHNode, HittableVec, Sphere};
 use crate::object::material::{Dielectric, Lambertian, Material, Metal};
-use crate::object::texture::{Texture, Checker, ImageTexture};
+use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture};
 use crate::vec3d::Vec3d;
 use rand::Rng;
 
@@ -88,7 +88,7 @@ pub fn checkered_spheres() -> BVHNode {
 pub fn earth() -> BVHNode {
     let mut world = HittableVec::new();
 
-    let image_file = "./misc/earthmap.jpg".to_string();
+    let image_file = "./misc/earthmap.png".to_string();
     let earth_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(ImageTexture::new(&image_file)));
 
     world.add(
@@ -97,5 +97,28 @@ pub fn earth() -> BVHNode {
         2.0,
             Material::Lambertian(Lambertian::from_texture(earth_texture)))
     )));
+    BVHNode::from_hittable_vec(Arc::new(world))
+}
+
+
+pub fn perlin_sphere() -> BVHNode {
+    let mut world = HittableVec::new();
+
+    let perlin_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(PerlinTexture::new()));
+    world.add(
+        Arc::new(Box::new(Sphere::static_sphere(
+            Vec3d::new(0.0, -1000.0, 0.0),
+            1000.0,
+            Material::Lambertian(Lambertian::from_texture(perlin_texture.clone()))
+        )))
+    );
+    world.add(
+        Arc::new(Box::new(Sphere::static_sphere(
+            Vec3d::new(0.0, 2.0, 0.0),
+            2.0,
+            Material::Lambertian(Lambertian::from_texture(perlin_texture.clone()))
+        )))
+    );
+
     BVHNode::from_hittable_vec(Arc::new(world))
 }
