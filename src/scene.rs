@@ -104,7 +104,7 @@ pub fn earth() -> BVHNode {
 pub fn perlin_sphere() -> BVHNode {
     let mut world = HittableVec::new();
 
-    let perlin_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(PerlinTexture::new()));
+    let perlin_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(PerlinTexture::new(4.0)));
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(
             Vec3d::new(0.0, -1000.0, 0.0),
