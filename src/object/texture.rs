@@ -6,6 +6,8 @@ use std::fmt::{Debug, Formatter};
 use image::{GenericImageView, Pixel};
 use crate::ray::Interval;
 
+use rand::Rng;
+
 
 pub trait Texture: Send + Sync + Debug {
     fn value(&self, u: f64, v: f64, p: &Vec3d) -> Vec3d;
@@ -112,7 +114,7 @@ impl Debug for ImageTexture {
 
 
 impl Texture for ImageTexture {
-    fn value(&self, u: f64, v: f64, p: &Vec3d) -> Vec3d {
+    fn value(&self, u: f64, v: f64, _p: &Vec3d) -> Vec3d {
         if self.image.height() <= 0 || self.image.width() <= 0 {
             return Vec3d::new(0.0, 1.0, 1.0);
         }
@@ -130,5 +132,72 @@ impl Texture for ImageTexture {
             pixel[1] as f64 / 255.0,
             pixel[2] as f64 / 255.0,
         )
+    }
+}
+
+
+#[derive(Debug)]
+pub struct PerlinTexture{
+    point_count: usize,
+    rand_float: Vec<f64>,
+
+    perm_x: Vec<i32>,
+    perm_y: Vec<i32>,
+    perm_z: Vec<i32>,
+}
+
+
+impl PerlinTexture {
+    pub fn new() -> Self {
+        let mut rng = rand::thread_rng();
+
+        let point_count = 256;
+        let rand_float: Vec<f64> = (0..point_count).map(|_| rng.gen_range(0.0..1.0)).collect();
+
+        let perm_x: Vec<i32> = (0..point_count).collect();
+        let perm_y: Vec<i32> = perm_x.clone();
+        let perm_z: Vec<i32> = perm_x.clone();
+
+        let count = point_count as usize;
+
+        Self {
+            point_count: count,
+            rand_float,
+            perm_x: Self::permute(perm_x, point_count),
+            perm_y: Self::permute(perm_y, point_count),
+            perm_z: Self::permute(perm_z, point_count),
+        }
+    }
+
+    pub fn noise(&self, point: &Vec3d) -> f64 {
+        let new_p = *point * 4.0;
+
+        let i = (new_p.x().floor() as i32 & 255) as usize;
+        let j = (new_p.y().floor() as i32 & 255) as usize;
+        let k = (new_p.z().floor() as i32 & 255) as usize;
+
+        self.rand_float[(self.perm_x[i] ^ self.perm_y[j] ^ self.perm_z[k]) as usize]
+    }
+
+    fn permute(mut p: Vec<i32>, n: i32) -> Vec<i32> {
+
+        let mut rng = rand::thread_rng();
+        for i in (1..n).rev() {
+
+            let target = rng.gen_range(0..i) as usize;
+            let i = i as usize;
+
+            let tmp = p[i];
+            p[i] = p[target];
+            p[target] = tmp;
+        }
+        p
+    }
+}
+
+
+impl Texture for PerlinTexture {
+    fn value(&self, _u: f64, _v: f64, p: &Vec3d) -> Vec3d {
+        Vec3d::new(1.0, 1.0, 1.0) * self.noise(p)
     }
 }
