@@ -228,11 +228,24 @@ impl PerlinTexture {
         }
         p
     }
+
+    fn turbulence(&self, point: &Vec3d, depth: i32) -> f64 {
+        let mut accum = 0.0;
+        let mut temp_p = *point;
+        let mut weight = 1.0;
+
+        for _ in 0..depth {
+            accum += weight * self.noise(&temp_p);
+            weight *= 0.5;
+            temp_p *= 2.0;
+        }
+        accum.abs()
+    }
 }
 
 
 impl Texture for PerlinTexture {
     fn value(&self, _u: f64, _v: f64, p: &Vec3d) -> Vec3d {
-        Vec3d::new(1.0, 1.0, 1.0) * 0.5 * (1.0 + self.noise(&(*p * self.scale)))
+        Vec3d::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z() + 10.0 * self.turbulence(p, 7)).sin())
     }
 }
