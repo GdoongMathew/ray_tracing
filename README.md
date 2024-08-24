@@ -17,3 +17,7 @@ Peter Shirley and the follow-up books.
 | BVH                  | 101.07      | 3.77 x  |
 | Multi-threaded       | 45.75       | 8.33 x  |
 | Multi-threaded + BVH | 12.5        | 30.5 x  |
+
+## Gallery
+### Week 1
+![Week 1](results/w1/image_23.png)
