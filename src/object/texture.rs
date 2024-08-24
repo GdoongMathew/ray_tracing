@@ -1,4 +1,4 @@
-use crate::vec3d::Vec3d;
+use crate::vec3d::{Vec3d, dot};
 use std::sync::Arc;
 use image;
 
@@ -139,7 +139,7 @@ impl Texture for ImageTexture {
 #[derive(Debug)]
 pub struct PerlinTexture {
     point_count: usize,
-    rand_float: Vec<f64>,
+    rand_vec3d: Vec<Vec3d>,
 
     perm_x: Vec<i32>,
     perm_y: Vec<i32>,
@@ -154,7 +154,8 @@ impl PerlinTexture {
         let mut rng = rand::thread_rng();
 
         let point_count = 256;
-        let rand_float: Vec<f64> = (0..point_count).map(|_| rng.gen_range(0.0..1.0)).collect();
+        // let rand_float: Vec<f64> = (0..point_count).map(|_| rng.gen_range(0.0..1.0)).collect();
+        let rand_vec3d: Vec<Vec3d> = (0..point_count).map(|_| Vec3d::gen_range(-1.0, 1.0).unit_vector()).collect();
 
         let perm_x: Vec<i32> = (0..point_count).collect();
         let perm_y: Vec<i32> = perm_x.clone();
@@ -164,7 +165,7 @@ impl PerlinTexture {
 
         Self {
             point_count: count,
-            rand_float,
+            rand_vec3d,
             perm_x: Self::permute(perm_x, point_count),
             perm_y: Self::permute(perm_y, point_count),
             perm_z: Self::permute(perm_z, point_count),
@@ -174,39 +175,41 @@ impl PerlinTexture {
 
     pub fn noise(&self, point: &Vec3d) -> f64 {
         let new_p = point.map(|x| x - x.floor());
-        let new_p = new_p * new_p * (3.0 - 2.0 * new_p);
 
         let i = point.x().floor() as i32;
         let j = point.y().floor() as i32;
         let k = point.z().floor() as i32;
 
-        let mut c: Vec<Vec<Vec<f64>>> = [[[0.0; 2]; 2]; 2].iter().map(|x| x.iter().map(|y| y.iter().map(|_| 0.0).collect()).collect()).collect();
+        let mut c: Vec<Vec<Vec<Vec3d>>> = vec![vec![vec![Vec3d::zero(); 2]; 2]; 2];
 
         for di in 0..2 {
             for dj in 0..2 {
                 for dk in 0..2 {
                     c[di as usize][dj as usize][dk as usize] =
-                        self.rand_float[(self.perm_x[((i + di) & 255) as usize] ^ self.perm_y[((j + dj) & 255) as usize] ^ self.perm_z[((k + dk) & 255) as usize]) as usize];
+                        self.rand_vec3d[(self.perm_x[((i + di) & 255) as usize] ^ self.perm_y[((j + dj) & 255) as usize] ^ self.perm_z[((k + dk) & 255) as usize]) as usize];
                 }
             }
         }
 
-        Self::trilinear_interpolate(c, new_p)
+        Self::perlin_interpolate(c, new_p)
     }
 
-    fn trilinear_interpolate(c: Vec<Vec<Vec<f64>>>, u: Vec3d) -> f64 {
+    fn perlin_interpolate(c: Vec<Vec<Vec<Vec3d>>>, u: Vec3d) -> f64 {
+
+        let new_u = u * u * (3.0 - 2.0 * u);
 
         let mut accum = 0.0;
-        let inv_u = -u + 1.0;
+        let inv_u = -new_u + 1.0;
         let ones = Vec3d::new(1.0, 1.0, 1.0);
 
         for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {
+                    let weight_v = u - Vec3d::new(i as f64, j as f64, k as f64);
                     let coord = Vec3d::new(i as f64, j as f64, k as f64);
                     let vec = coord * u + (ones - coord) * inv_u;
 
-                    accum += c[i][j][k] * vec.x() * vec.y() * vec.z();
+                    accum += dot(&c[i][j][k], &weight_v) * vec.x() * vec.y() * vec.z();
                 }
             }
         }
@@ -230,6 +233,6 @@ impl PerlinTexture {
 
 impl Texture for PerlinTexture {
     fn value(&self, _u: f64, _v: f64, p: &Vec3d) -> Vec3d {
-        Vec3d::new(1.0, 1.0, 1.0) * self.noise(&(*p * self.scale))
+        Vec3d::new(1.0, 1.0, 1.0) * 0.5 * (1.0 + self.noise(&(*p * self.scale)))
     }
 }
