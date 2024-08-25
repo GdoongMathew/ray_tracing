@@ -24,11 +24,20 @@ impl AABB {
     /// # Returns
     /// The new AABB.
     pub fn new(interval_x: Interval, interval_y: Interval, interval_z: Interval) -> Self {
-        Self {
+        let mut ret = Self {
             interval_x,
             interval_y,
             interval_z,
-        }
+        };
+
+        ret.pad_to_minimum();
+        ret
+    }
+
+    fn pad_to_minimum(&mut self) {
+        if self.interval_x.size() < f64::EPSILON { self.interval_x.expand(f64::EPSILON); }
+        if self.interval_y.size() < f64::EPSILON { self.interval_y.expand(f64::EPSILON); }
+        if self.interval_z.size() < f64::EPSILON { self.interval_z.expand(f64::EPSILON); }
     }
 
 
