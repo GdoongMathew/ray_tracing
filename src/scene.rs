@@ -1,7 +1,7 @@
 use std::sync::Arc;
-use crate::object::{BVHNode, HittableVec, Sphere};
+use crate::object::{BVHNode, HittableVec, Sphere, Quad};
 use crate::object::material::{Dielectric, Lambertian, Material, Metal};
-use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture};
+use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture, SolidColor};
 use crate::vec3d::Vec3d;
 use rand::Rng;
 
@@ -94,9 +94,9 @@ pub fn earth() -> BVHNode {
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(
             Vec3d::new(0.0, 0.0, 0.0),
-        2.0,
+            2.0,
             Material::Lambertian(Lambertian::from_texture(earth_texture)))
-    )));
+        )));
     BVHNode::from_hittable_vec(Arc::new(world))
 }
 
@@ -109,16 +109,107 @@ pub fn perlin_sphere() -> BVHNode {
         Arc::new(Box::new(Sphere::static_sphere(
             Vec3d::new(0.0, -1000.0, 0.0),
             1000.0,
-            Material::Lambertian(Lambertian::from_texture(perlin_texture.clone()))
+            Material::Lambertian(Lambertian::from_texture(perlin_texture.clone())),
         )))
     );
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(
             Vec3d::new(0.0, 2.0, 0.0),
             2.0,
-            Material::Lambertian(Lambertian::from_texture(perlin_texture.clone()))
+            Material::Lambertian(Lambertian::from_texture(perlin_texture.clone())),
         )))
     );
 
     BVHNode::from_hittable_vec(Arc::new(world))
+}
+
+
+pub fn quads() -> HittableVec {
+    let mut world = HittableVec::new();
+
+    // Material
+    let left_red = Material::Lambertian(
+        Lambertian::from_texture(
+            Arc::new(Box::new(SolidColor::new(
+                Vec3d::new(1.0, 0.2, 0.2))))
+        )
+    );
+
+    let back_green = Material::Lambertian(
+        Lambertian::from_texture(
+            Arc::new(Box::new(SolidColor::new(
+                Vec3d::new(0.2, 1.0, 0.2)
+            )))
+        )
+    );
+
+    let right_blue = Material::Lambertian(
+        Lambertian::from_texture(
+            Arc::new(Box::new(SolidColor::new(
+                Vec3d::new(0.2, 0.2, 1.0)
+            )))
+        )
+    );
+
+    let upper_orange = Material::Lambertian(
+        Lambertian::from_texture(
+            Arc::new(Box::new(SolidColor::new(
+                Vec3d::new(1.0, 0.5, 0.0)
+            )))
+        )
+    );
+
+    let lower_teal = Material::Lambertian(
+        Lambertian::from_texture(
+            Arc::new(Box::new(SolidColor::new(
+                Vec3d::new(0.2, 0.8, 0.8)
+            )))
+        )
+    );
+
+    // Quads
+    world.add(Arc::new(Box::new(
+        Quad::new(
+            Vec3d::new(-3.0, -2.0, 5.0),
+            Vec3d::new(0.0, 0.0, -4.0),
+            Vec3d::new(0.0, 4.0, 0.0),
+            left_red,
+        )
+    )));
+
+    world.add(Arc::new(Box::new(
+        Quad::new(
+            Vec3d::new(-2.0, -2.0, 0.0),
+            Vec3d::new(4.0, 0.0, 0.0),
+            Vec3d::new(0.0, 4.0, 0.0),
+            back_green,
+        )
+    )));
+
+    world.add(Arc::new(Box::new(
+        Quad::new(
+            Vec3d::new(3.0, -2.0, 1.0),
+            Vec3d::new(0.0, 0.0, 4.0),
+            Vec3d::new(0.0, 4.0, 0.0),
+            right_blue,
+        )
+    )));
+    world.add(Arc::new(Box::new(
+        Quad::new(
+            Vec3d::new(-2.0, 3.0, 1.0),
+            Vec3d::new(4.0, 0.0, 0.0),
+            Vec3d::new(0.0, 0.0, 4.0),
+            upper_orange,
+        )
+    )));
+
+    world.add(Arc::new(Box::new(
+        Quad::new(
+            Vec3d::new(-2.0, -3.0, 5.0),
+            Vec3d::new(4.0, 0.0, 0.0),
+            Vec3d::new(0.0, 0.0, -4.0),
+            lower_teal,
+        )
+    )));
+    world
 }
