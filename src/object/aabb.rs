@@ -35,9 +35,9 @@ impl AABB {
     }
 
     fn pad_to_minimum(&mut self) {
-        if self.interval_x.size() < f64::EPSILON { self.interval_x.expand(f64::EPSILON); }
-        if self.interval_y.size() < f64::EPSILON { self.interval_y.expand(f64::EPSILON); }
-        if self.interval_z.size() < f64::EPSILON { self.interval_z.expand(f64::EPSILON); }
+        if self.interval_x.size() < f64::EPSILON { self.interval_x = self.interval_x.expand(f64::EPSILON); }
+        if self.interval_y.size() < f64::EPSILON { self.interval_y = self.interval_y.expand(f64::EPSILON); }
+        if self.interval_z.size() < f64::EPSILON { self.interval_z = self.interval_z.expand(f64::EPSILON); }
     }
 
 
@@ -245,5 +245,18 @@ mod test_aabb {
             Interval { min: 5.0, max: 7.0 },
         );
         assert_eq!(aabb.longest_axis(), 2);
+    }
+
+    #[test]
+    fn test_aabb_pad_to_minimum() {
+        let aabb = AABB::new(
+            Interval { min: 0.0, max: 0.0 },
+            Interval { min: 0.0, max: 0.0 },
+            Interval { min: 0.0, max: 0.0 },
+        );
+
+        assert_ne!(aabb.interval_x.size(), 0.0);
+        assert_ne!(aabb.interval_y.size(), 0.0);
+        assert_ne!(aabb.interval_z.size(), 0.0);
     }
 }
