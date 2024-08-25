@@ -6,7 +6,7 @@ use crate::object::hit::HitRecord;
 use std::sync::Arc;
 use crate::object::texture::{Texture, SolidColor};
 
-type Scattered = Option<(Option<Ray>, Vec3d)>;
+type Scattered = Option<(Ray, Vec3d)>;
 
 
 pub trait Scatterable: Send + Sync {
@@ -123,7 +123,7 @@ impl Scatterable for Lambertian {
         }
 
         let attenuation = self.texture.value(hit_record.u, hit_record.v, &hit_record.point);
-        Some((Some(Ray::new(hit_record.point, scatter_direction, ray_in.time)), attenuation))
+        Some((Ray::new(hit_record.point, scatter_direction, ray_in.time), attenuation))
     }
 }
 
@@ -154,7 +154,7 @@ impl Scatterable for Metal {
 
         let ray = Ray::new(hit_record.point, reflected, ray_in.time);
         let dot = dot(&ray.direction, &hit_record.normal);
-        if dot <= 0.0 { None } else { Some((Some(ray), self.albedo)) }
+        if dot <= 0.0 { None } else { Some((ray, self.albedo)) }
     }
 }
 
@@ -198,7 +198,7 @@ impl Scatterable for Dielectric {
 
         let attenuation = Vec3d::new(1.0, 1.0, 1.0);
         let scattered = Ray::new(hit_record.point, direction, ray_in.time);
-        Some((Some(scattered), attenuation))
+        Some((scattered, attenuation))
     }
 }
 

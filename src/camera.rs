@@ -198,7 +198,7 @@ impl Camera {
 
             if let Some((scattered_ray, attenuation)) = hit_record.material.scatter(ray, &hit_record) {
                 let color = attenuation * Self::ray_color(
-                    &scattered_ray.unwrap(), world, depth - 1, background
+                    &scattered_ray, world, depth - 1, background
                 );
                 return color + emitted;
             }
