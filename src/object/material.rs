@@ -15,6 +15,8 @@ pub trait Scatterable: Send + Sync {
         ray_in: &Ray,
         hit_record: &HitRecord,
     ) -> Scattered;
+
+    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3d) -> Vec3d { Vec3d::zero() }
 }
 
 #[derive(Debug, Clone)]
@@ -58,14 +60,18 @@ impl Scatterable for Empty {
 
 #[derive(Debug, Clone)]
 pub struct Light {
-    color: Vec3d,
+    texture: Arc<Box<dyn Texture>>,
 }
 
 impl Light {
-    pub fn new() -> Self {
-        Self {
-            color: Vec3d::new(1.0, 1.0, 1.0),
-        }
+
+    pub fn new(color: Vec3d) -> Self {
+        let texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(SolidColor::new(color)));
+        Self::from_texture(texture)
+    }
+
+    pub fn from_texture(texture: Arc<Box<dyn Texture>>) -> Self {
+        Self { texture }
     }
 }
 
@@ -75,6 +81,10 @@ impl Scatterable for Light {
         ray_in: &Ray,
         hit_record: &HitRecord,
     ) -> Scattered { Some((None, Vec3d::new(1.0, 1.0, 1.0))) }
+
+    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3d) -> Vec3d {
+        self.texture.value(_u, _v, _p)
+    }
 }
 
 #[derive(Debug, Clone)]
