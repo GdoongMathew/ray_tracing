@@ -42,6 +42,13 @@ impl Scatterable for Material {
             Material::Dielectric(d) => d.scatter(ray_in, hit_record),
         }
     }
+
+    fn emitted(&self, u: f64, v: f64, p: &Vec3d) -> Vec3d {
+        match self {
+            Material::Light(li) => li.emitted(u, v, p),
+            _ => Vec3d::zero(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -64,7 +71,6 @@ pub struct Light {
 }
 
 impl Light {
-
     pub fn new(color: Vec3d) -> Self {
         let texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(SolidColor::new(color)));
         Self::from_texture(texture)
@@ -80,7 +86,7 @@ impl Scatterable for Light {
         &self,
         ray_in: &Ray,
         hit_record: &HitRecord,
-    ) -> Scattered { Some((None, Vec3d::new(1.0, 1.0, 1.0))) }
+    ) -> Scattered { None }
 
     fn emitted(&self, _u: f64, _v: f64, _p: &Vec3d) -> Vec3d {
         self.texture.value(_u, _v, _p)
@@ -148,8 +154,7 @@ impl Scatterable for Metal {
 
         let ray = Ray::new(hit_record.point, reflected, ray_in.time);
         let dot = dot(&ray.direction, &hit_record.normal);
-        if dot <= 0.0 { None }
-        else { Some((Some(ray), self.albedo)) }
+        if dot <= 0.0 { None } else { Some((Some(ray), self.albedo)) }
     }
 }
 
