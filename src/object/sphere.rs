@@ -32,11 +32,10 @@ impl Sphere {
         radius: f64,
         material: Material,
     ) -> Self {
-
         let rvec = Vec3d::new(radius, radius, radius);
         let bbox = AABB::surrounding_box(
             &AABB::from_points(&(center - rvec), &(center + rvec)),
-            &AABB::from_points(&(center1 - rvec), &(center1 + rvec))
+            &AABB::from_points(&(center1 - rvec), &(center1 + rvec)),
         );
         Self::new(center, center1, radius, material, bbox)
     }
@@ -81,7 +80,6 @@ impl Sphere {
 
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord> {
-
         let center = if self.is_moving() {
             self.sphere_center(ray.time)
         } else {
@@ -128,6 +126,7 @@ mod test_hittable {
     use super::*;
 
     use super::super::material::*;
+    use assert_approx_eq::assert_approx_eq;
 
     #[test]
     fn test_sphere_outside_hit() {
@@ -207,5 +206,38 @@ mod test_hittable {
         let hit_record = sphere.hit(&ray, &interval);
 
         assert!(hit_record.is_none());
+    }
+
+    // This function is directly copied from
+    // https://github.com/fralken/ray-tracing-the-next-week/blob/ea3f3b5e2bb4e5967b7f6e1da415d5feffc4416a/src/sphere.rs#L9
+    fn get_sphere_uv(p: &Vec3d) -> (f64, f64) {
+        let phi = p.z().atan2(p.x());
+        let theta = p.y().asin();
+        let u = 1.0 - (phi + std::f64::consts::PI) / (2.0 * std::f64::consts::PI);
+        let v = (theta + std::f64::consts::FRAC_PI_2) / std::f64::consts::PI;
+        (u, v)
+    }
+
+    #[test]
+    fn test_sphere_get_uv_1() {
+        let point = Vec3d::new(0.0, 0.0, 1.0);
+
+        let (u, v) = Sphere::get_sphere_uv(&point);
+        let (target_u, target_v) = get_sphere_uv(&point);
+
+        assert_eq!(u, target_u);
+        assert_eq!(v, target_v);
+    }
+
+    #[test]
+    fn test_sphere_get_uv_2() {
+        let point = Vec3d::new(1.5, 2.0, 3.7).unit_vector();
+        let (u, v) = Sphere::get_sphere_uv(&point);
+
+        let (u, v) = Sphere::get_sphere_uv(&point);
+        let (target_u, target_v) = get_sphere_uv(&point);
+
+        assert_approx_eq!(u, target_u);
+        assert_approx_eq!(v, target_v);
     }
 }
