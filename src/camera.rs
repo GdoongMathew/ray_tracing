@@ -35,6 +35,8 @@ pub struct Camera {
     defocus_radius: f64,
     focus_dist: f64,
 
+    background_color: Vec3d,
+
 }
 
 fn random_in_unit_disk() -> Vec3d {
@@ -91,6 +93,7 @@ impl Camera {
             defocus_angle: 0.0,
             defocus_radius: 0.0,
             focus_dist: 10.0,
+            background_color: Vec3d::zero(),
         }
     }
 
@@ -147,6 +150,8 @@ impl Camera {
 
     pub fn set_focus_dist(&mut self, focus_dist: f64) -> () { self.focus_dist = focus_dist; }
 
+    pub fn set_background_color(&mut self, color: Vec3d) -> () { self.background_color = color; }
+
     fn defocus_disk_u(&self) -> Vec3d { self.u() * self.defocus_radius }
 
     fn defocus_disk_v(&self) -> Vec3d { self.v() * self.defocus_radius }
@@ -185,20 +190,23 @@ impl Camera {
         self.pixel_upper_left() + self.pixel_delta_u() * w + self.pixel_delta_v() * h
     }
 
-    fn ray_color<H: Hittable>(ray: &Ray, world: &H, depth: i32) -> Vec3d {
+    fn ray_color<H: Hittable>(ray: &Ray, world: &H, depth: i32, background: &Vec3d) -> Vec3d {
         if depth <= 0 { return Vec3d::zero(); }
 
         if let Some(hit_record) = world.hit(ray, &Interval { min: 0.0001, max: f64::INFINITY }) {
-            let scattered = hit_record.material.scatter(ray, &hit_record);
-            if let Some((scattered_ray, color)) = scattered {
-                return color * Self::ray_color(&scattered_ray.unwrap(), world, depth - 1);
-            }
-            return Vec3d::zero();
-        }
+            let emitted = hit_record.material.emitted(hit_record.u, hit_record.v, &hit_record.point);
 
-        let unit_direction = ray.direction.unit_vector();
-        let a = 0.5 * (unit_direction.y() + 1.0);
-        Vec3d::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3d::new(0.5, 0.7, 1.0) * a
+            if let Some((scattered_ray, attenuation)) = hit_record.material.scatter(ray, &hit_record) {
+                let color = attenuation * Self::ray_color(
+                    &scattered_ray.unwrap(), world, depth - 1, background
+                );
+                return color + emitted;
+            }
+            emitted
+        } else {
+            // hits nothing.
+            *background
+        }
     }
 
     /// Random sample a ray through the pixel at the given width and height coordinate.
@@ -260,7 +268,7 @@ impl Camera {
                         let mut color = Vec3d::zero();
                         for _ in 0..camera.samples_per_pixel {
                             let ray = camera.sample_ray(w, h);
-                            color += Self::ray_color(&ray, world, camera.max_depth);
+                            color += Self::ray_color(&ray, world, camera.max_depth, &camera.background_color);
                         }
                         tx_clone.send((w, h, color * camera.samples_scale)).unwrap();
                     })
