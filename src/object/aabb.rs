@@ -7,7 +7,7 @@ use crate::vec3d::Vec3d;
 /// * `interval_x` - The interval of x values.
 /// * `interval_y` - The interval of y values.
 /// * `interval_z` - The interval of z values.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AABB {
     interval_x: Interval,
     interval_y: Interval,

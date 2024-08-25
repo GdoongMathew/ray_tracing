@@ -27,7 +27,7 @@ impl Quad {
         let shift_d = dot(&normal, &point);
         let vec_w = n / dot(&n, &n);
 
-        let bbox = Self::bounding_box(&point, &vec_u, &vec_v);
+        let bbox = Self::get_bounding_box(&point, &vec_u, &vec_v);
 
         Self {
             point,
@@ -41,7 +41,7 @@ impl Quad {
         }
     }
 
-    fn bounding_box(point: &Vec3d, vec_u: &Vec3d, vec_v: &Vec3d) -> AABB {
+    fn get_bounding_box(point: &Vec3d, vec_u: &Vec3d, vec_v: &Vec3d) -> AABB {
         let bbox_diagonal_1 = AABB::from_points(
             point, &(*point + *vec_u + *vec_v),
         );
@@ -88,6 +88,51 @@ impl Hittable for Quad {
     }
 
     fn bounding_box(&self) -> AABB {
-        todo!()
+        self.bbox.clone()
+    }
+}
+
+
+#[cfg(test)]
+mod test_quad {
+
+    use super::*;
+
+    #[test]
+    fn test_quad_is_interval() {
+        assert_eq!(Quad::is_interior(0.5, 0.5), true);
+        assert_eq!(Quad::is_interior(0.0, 0.0), true);
+        assert_eq!(Quad::is_interior(1.0, 1.0), true);
+    }
+
+    #[test]
+    fn test_quad_not_is_interval() {
+        assert_eq!(Quad::is_interior(1.1, 0.5), false);
+        assert_eq!(Quad::is_interior(0.5, 1.1), false);
+        assert_eq!(Quad::is_interior(-0.1, 0.5), false);
+    }
+
+    #[test]
+    fn test_quad_get_bounding_box_1() {
+        let point = Vec3d::new(0.0, 0.0, 0.0);
+        let vec_u = Vec3d::new(1.0, 0.0, 0.0);
+        let vec_v = Vec3d::new(0.0, 1.0, 0.0);
+
+        let bbox = Quad::get_bounding_box(&point, &vec_u, &vec_v);
+        let target = AABB::from_points(&point, &Vec3d::new(1.0, 1.0, 0.0));
+
+        assert_eq!(bbox, target);
+    }
+
+    #[test]
+    fn test_quad_get_bounding_box_2() {
+        let point = Vec3d::new(10.0, 5.0, 2.0);
+        let vec_u = Vec3d::new(2.0, 3.0, 0.0);
+        let vec_v = Vec3d::new(0.0, 2.0, -2.0);
+
+        let bbox = Quad::get_bounding_box(&point, &vec_u, &vec_v);
+        let target = AABB::from_points(&point, &Vec3d::new(12.0, 10.0, 0.0));
+
+        assert_eq!(bbox, target);
     }
 }
