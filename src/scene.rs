@@ -1,6 +1,8 @@
+#[forbid(unsafe_code)]
+
 use std::sync::Arc;
 use crate::object::{BVHNode, HittableVec, Sphere, Quad};
-use crate::object::material::{Dielectric, Lambertian, Material, Metal};
+use crate::object::material::{Dielectric, Lambertian, Material, Metal, Light};
 use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture, SolidColor};
 use crate::vec3d::Vec3d;
 use rand::Rng;
@@ -212,4 +214,44 @@ pub fn quads() -> HittableVec {
         )
     )));
     world
+}
+
+
+pub fn simple_light() -> BVHNode {
+    let mut world = HittableVec::new();
+
+    let perlin_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(PerlinTexture::new(4.0)));
+    world.add(
+        Arc::new(Box::new(Sphere::static_sphere(
+            Vec3d::new(0.0, -1000.0, 0.0),
+            1000.0,
+            Material::Lambertian(Lambertian::from_texture(perlin_texture.clone())),
+        )))
+    );
+    world.add(
+        Arc::new(Box::new(Sphere::static_sphere(
+            Vec3d::new(0.0, 2.0, 0.0),
+            2.0,
+            Material::Lambertian(Lambertian::from_texture(perlin_texture.clone())),
+        )))
+    );
+
+    let light = Material::Light(Light::new(Vec3d::new(4.0, 4.0, 4.0)));
+    world.add(
+        Arc::new(Box::new(Quad::new(
+            Vec3d::new(3.0, 1.0, -2.0),
+            Vec3d::new(4.0, 0.0, 0.0),
+            Vec3d::new(0.0, 4.0, 0.0),
+            light.clone(),
+        )))
+    );
+    // world.add(
+    //     Arc::new(Box::new(Sphere::static_sphere(
+    //         Vec3d::new(0.0, 7.0, 0.0),
+    //         2.0,
+    //         light.clone(),
+    //     )))
+    // );
+    BVHNode::from_hittable_vec(Arc::new(world))
+    // world
 }

@@ -1,4 +1,4 @@
-use crate::vec3d::Vec3d;
+use crate::vec3d::{Vec3d, Point3d};
 
 
 /// A ray is a line that starts at a point and goes in a direction.
@@ -23,7 +23,7 @@ use crate::vec3d::Vec3d;
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {
-    pub origin: Vec3d,
+    pub origin: Point3d,
     pub direction: Vec3d,
     pub time: f64,
 }
@@ -31,14 +31,14 @@ pub struct Ray {
 impl Ray {
 
     pub fn default() -> Self {
-        Self { origin: Vec3d::zero(), direction: Vec3d::zero(), time: 0.0}
+        Self { origin: Point3d::zero(), direction: Vec3d::zero(), time: 0.0}
     }
 
-    pub fn new(origin: Vec3d, direction: Vec3d, time: f64) -> Self {
+    pub fn new(origin: Point3d, direction: Vec3d, time: f64) -> Self {
         Self { origin, direction, time }
     }
 
-    pub fn at(&self, t: f64) -> Vec3d {
+    pub fn at(&self, t: f64) -> Point3d {
         self.origin + self.direction * t
     }
 }
@@ -51,33 +51,33 @@ mod test_ray {
     #[test]
     fn test_ray_new() {
         let ray = Ray::new(
-            Vec3d::new(1.0, 2.0, 3.0),
+            Point3d::new(1.0, 2.0, 3.0),
             Vec3d::new(4.0, 5.0, 6.0),
             0.0,
         );
-        assert_eq!(ray.origin, Vec3d::new(1.0, 2.0, 3.0));
+        assert_eq!(ray.origin, Point3d::new(1.0, 2.0, 3.0));
         assert_eq!(ray.direction, Vec3d::new(4.0, 5.0, 6.0));
     }
 
     #[test]
     fn test_ray_at() {
         let ray = Ray::new(
-            Vec3d::new(1.0, 2.0, 3.0),
+            Point3d::new(1.0, 2.0, 3.0),
             Vec3d::new(4.0, 5.0, 6.0),
             0.0,
         );
 
         let t: f64 = 0.5;
         let result = ray.at(t);
-        assert_eq!(result, Vec3d::new(3.0, 4.5, 6.0));
+        assert_eq!(result, Point3d::new(3.0, 4.5, 6.0));
 
         let t: f64 = 2.0;
         let result = ray.at(t);
-        assert_eq!(result, Vec3d::new(9.0, 12.0, 15.0));
+        assert_eq!(result, Point3d::new(9.0, 12.0, 15.0));
 
         let t: f64 = 3.0;
         let result = ray.at(t);
-        assert_eq!(result, Vec3d::new(13.0, 17.0, 21.0));
+        assert_eq!(result, Point3d::new(13.0, 17.0, 21.0));
     }
 }
 

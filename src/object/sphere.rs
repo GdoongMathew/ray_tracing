@@ -1,11 +1,11 @@
 use crate::ray::{Interval, Ray};
 use super::hit::*;
-use crate::vec3d::{Vec3d, dot};
+use crate::vec3d::{Vec3d, Point3d, dot};
 use crate::object::material::Material;
 use crate::object::aabb::AABB;
 
 pub struct Sphere {
-    center: Vec3d,
+    center: Point3d,
     radius: f64,
     material: Material,
 
@@ -15,7 +15,7 @@ pub struct Sphere {
 
 impl Sphere {
     pub fn static_sphere(
-        center: Vec3d,
+        center: Point3d,
         radius: f64,
         material: Material,
     ) -> Self {
@@ -27,8 +27,8 @@ impl Sphere {
     }
 
     pub fn moving_sphere(
-        center: Vec3d,
-        center1: Vec3d,
+        center: Point3d,
+        center1: Point3d,
         radius: f64,
         material: Material,
     ) -> Self {
@@ -41,8 +41,8 @@ impl Sphere {
     }
 
     fn new(
-        center: Vec3d,
-        center1: Vec3d,
+        center: Point3d,
+        center1: Point3d,
         radius: f64,
         material: Material,
         bbox: AABB,
@@ -63,7 +63,7 @@ impl Sphere {
         self.center_vec.x() != 0.0 || self.center_vec.y() != 0.0 || self.center_vec.z() != 0.0
     }
 
-    pub fn sphere_center(&self, time: f64) -> Vec3d {
+    pub fn sphere_center(&self, time: f64) -> Point3d {
         // If the sphere is not moving, the center is the same.
         self.center + self.center_vec * time
     }
@@ -131,7 +131,7 @@ mod test_hittable {
     #[test]
     fn test_sphere_outside_hit() {
         let sphere = Sphere::static_sphere(
-            Vec3d::new(0.0, 0.0, 0.0),
+            Point3d::new(0.0, 0.0, 0.0),
             2.0,
             Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
         );

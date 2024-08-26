@@ -8,6 +8,9 @@ pub struct Vec3d {
     vector: [f64; 3],
 }
 
+pub use Vec3d as Point3d;
+pub use Vec3d as Color;
+
 /// Implementation of ``Vec3d``
 ///
 /// This is a struct that represents a 3D vector with x, y, and z components.

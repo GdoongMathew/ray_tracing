@@ -1,4 +1,4 @@
-use crate::vec3d::{Vec3d, cross, dot};
+use crate::vec3d::{Vec3d, Point3d, cross, dot};
 
 use crate::object::aabb::AABB;
 use crate::object::HitRecord;
@@ -8,7 +8,7 @@ use crate::object::hit::Hittable;
 
 
 pub struct Quad {
-    point: Vec3d,
+    point: Point3d,
     vec_u: Vec3d,
     vec_v: Vec3d,
     vec_w: Vec3d,
@@ -21,7 +21,7 @@ pub struct Quad {
 }
 
 impl Quad {
-    pub fn new(point: Vec3d, vec_u: Vec3d, vec_v: Vec3d, material: Material) -> Self {
+    pub fn new(point: Point3d, vec_u: Vec3d, vec_v: Vec3d, material: Material) -> Self {
         let n = cross(&vec_u, &vec_v);
         let normal = n.unit_vector();
         let shift_d = dot(&normal, &point);
@@ -41,7 +41,7 @@ impl Quad {
         }
     }
 
-    fn get_bounding_box(point: &Vec3d, vec_u: &Vec3d, vec_v: &Vec3d) -> AABB {
+    fn get_bounding_box(point: &Point3d, vec_u: &Vec3d, vec_v: &Vec3d) -> AABB {
         let bbox_diagonal_1 = AABB::from_points(
             point, &(*point + *vec_u + *vec_v),
         );
@@ -52,7 +52,7 @@ impl Quad {
     }
 
     fn is_interior(alpha: f64, beta: f64) -> bool {
-        let unit_interval = Interval{min: 0.0, max: 1.0};
+        let unit_interval = Interval { min: 0.0, max: 1.0 };
         unit_interval.contains(alpha) && unit_interval.contains(beta)
     }
 }
@@ -74,7 +74,7 @@ impl Hittable for Quad {
         let planar_hit_point_vector = intersection - self.point;
         let alpha = dot(&self.vec_w, &cross(&planar_hit_point_vector, &self.vec_v));
         let beta = dot(&self.vec_w, &cross(&self.vec_u, &planar_hit_point_vector));
-        if !Self::is_interior(alpha, beta) {return None;};
+        if !Self::is_interior(alpha, beta) { return None; };
 
         let mut rec = HitRecord::new(
             &self.material,
@@ -95,8 +95,8 @@ impl Hittable for Quad {
 
 #[cfg(test)]
 mod test_quad {
-
     use super::*;
+    use crate::object::material::Lambertian;
 
     #[test]
     fn test_quad_is_interval() {
@@ -134,5 +134,44 @@ mod test_quad {
         let target = AABB::from_points(&point, &Vec3d::new(12.0, 10.0, 0.0));
 
         assert_eq!(bbox, target);
+    }
+
+    #[test]
+    fn test_quad_init_1() {
+        let quad = Quad::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            Vec3d::new(1.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+
+        assert_eq!(quad.point, Vec3d::new(0.0, 0.0, 0.0));
+        assert_eq!(quad.vec_u, Vec3d::new(1.0, 0.0, 0.0));
+        assert_eq!(quad.vec_v, Vec3d::new(0.0, 1.0, 0.0));
+        assert_eq!(quad.vec_w, Vec3d::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn test_quad_hit_1() {
+        let quad = Quad::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            Vec3d::new(1.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+
+        let ray = Ray::new(
+            Vec3d::new(0.0, 0.0, -5.0),
+            Vec3d::new(0.0, 0.0, 1.0),
+            0.0,
+        );
+
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = quad.hit(&ray, &interval).unwrap();
+
+        assert_eq!(hit_record.t, 5.0);
+        assert_eq!(hit_record.point, Vec3d::new(0.0, 0.0, 0.0));
+        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, 1.0));
+        assert_eq!(hit_record.front_face, true);
     }
 }
