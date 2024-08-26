@@ -98,6 +98,8 @@ mod test_quad {
     use super::*;
     use crate::object::material::Lambertian;
 
+    use assert_approx_eq::assert_approx_eq;
+
     #[test]
     fn test_quad_is_interval() {
         assert_eq!(Quad::is_interior(0.5, 0.5), true);
@@ -114,7 +116,7 @@ mod test_quad {
 
     #[test]
     fn test_quad_get_bounding_box_1() {
-        let point = Vec3d::new(0.0, 0.0, 0.0);
+        let point = Point3d::zero();
         let vec_u = Vec3d::new(1.0, 0.0, 0.0);
         let vec_v = Vec3d::new(0.0, 1.0, 0.0);
 
@@ -139,7 +141,7 @@ mod test_quad {
     #[test]
     fn test_quad_init_1() {
         let quad = Quad::new(
-            Vec3d::new(0.0, 0.0, 0.0),
+            Vec3d::zero(),
             Vec3d::new(1.0, 0.0, 0.0),
             Vec3d::new(0.0, 1.0, 0.0),
             Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
@@ -149,19 +151,21 @@ mod test_quad {
         assert_eq!(quad.vec_u, Vec3d::new(1.0, 0.0, 0.0));
         assert_eq!(quad.vec_v, Vec3d::new(0.0, 1.0, 0.0));
         assert_eq!(quad.vec_w, Vec3d::new(0.0, 0.0, 1.0));
+        assert_eq!(quad.normal, Vec3d::new(0.0, 0.0, 1.0));
+        assert_eq!(quad.shift_d, 0.0);
     }
 
     #[test]
     fn test_quad_hit_1() {
         let quad = Quad::new(
-            Vec3d::new(0.0, 0.0, 0.0),
+            Point3d::zero(),
             Vec3d::new(1.0, 0.0, 0.0),
             Vec3d::new(0.0, 1.0, 0.0),
             Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
         );
 
         let ray = Ray::new(
-            Vec3d::new(0.0, 0.0, -5.0),
+            Point3d::new(0.0, 0.0, -5.0),
             Vec3d::new(0.0, 0.0, 1.0),
             0.0,
         );
@@ -170,8 +174,119 @@ mod test_quad {
         let hit_record = quad.hit(&ray, &interval).unwrap();
 
         assert_eq!(hit_record.t, 5.0);
-        assert_eq!(hit_record.point, Vec3d::new(0.0, 0.0, 0.0));
-        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, 1.0));
-        assert_eq!(hit_record.front_face, true);
+        assert_eq!(hit_record.point, Point3d::new(0.0, 0.0, 0.0));
+        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_record.front_face, false);
+    }
+
+    #[test]
+    fn test_quad_hit_2() {
+        let quad = Quad::new(
+            Point3d::zero(),
+            Vec3d::new(1.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+
+        let ray = Ray::new(
+            Point3d::new(0.0, 0.5, -7.5),
+            Vec3d::new(0.0, 0.0, 1.0),
+            0.0,
+        );
+
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = quad.hit(&ray, &interval).unwrap();
+
+        assert_eq!(hit_record.t, 7.5);
+        assert_eq!(hit_record.point, Point3d::new(0.0, 0.5, 0.0));
+        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_record.front_face, false);
+    }
+
+    #[test]
+    fn test_quad_hit_3() {
+        let quad = Quad::new(
+            Point3d::new(-0.5, -0.5, 0.0),
+            Vec3d::new(1.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+
+        let ray = Ray::new(
+            Point3d::new(-0.5, -0.5, -0.5),
+            Vec3d::new(1.0, 1.0, 1.0).unit_vector(),
+            0.0,
+        );
+
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = quad.hit(&ray, &interval).unwrap();
+
+        assert_approx_eq!(hit_record.t, (0.5_f64.powi(2) * 3.0).sqrt());
+        assert_eq!(hit_record.point, Point3d::new(0.0, 0.0, 0.0));
+        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_record.front_face, false);
+    }
+
+    #[test]
+    fn test_quad_not_hit_not_contain() {
+        let quad = Quad::new(
+            Point3d::zero(),
+            Vec3d::new(1.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+
+        let ray = Ray::new(
+            Point3d::new(0.0, 0.0, -5.0),
+            Vec3d::new(0.0, 0.0, 1.0),
+            0.0,
+        );
+
+        let interval = Interval { min: 0.0, max: 4.0 };
+        let hit_record = quad.hit(&ray, &interval);
+
+        assert!(hit_record.is_none());
+    }
+
+    #[test]
+    fn test_quad_not_hit_parallel() {
+        let quad = Quad::new(
+            Point3d::zero(),
+            Vec3d::new(1.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+
+        let ray = Ray::new(
+            Point3d::new(0.0, 0.5, 0.5),
+            Vec3d::new(0.0, 0.0, 1.0),
+            0.0,
+        );
+
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = quad.hit(&ray, &interval);
+
+        assert!(hit_record.is_none());
+    }
+
+    #[test]
+    fn test_quad_not_hit_not_interior() {
+        let quad = Quad::new(
+            Point3d::zero(),
+            Vec3d::new(1.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            Material::Lambertian(Lambertian::new(Vec3d::new(0.1, 0.2, 0.5))),
+        );
+
+        let ray = Ray::new(
+            Point3d::new(0.0, 1.1, -5.0),
+            Vec3d::new(0.0, 0.0, 1.0),
+            0.0,
+        );
+
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+        let hit_record = quad.hit(&ray, &interval);
+
+        assert!(hit_record.is_none());
     }
 }
