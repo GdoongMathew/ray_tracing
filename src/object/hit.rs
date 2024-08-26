@@ -49,7 +49,13 @@ impl<'m> HitRecord<'m> {
     }
 
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3d) {
+        // Determine if the ray is hitting the front or back face of the object
+        // by checking the angle between the ray direction and the outward normal.
+        // The `front_face` is true if the angle is less than 90 degrees.
         self.front_face = dot(&ray.direction, &outward_normal) < 0.0;
+
+        // The normal vector is always facing the ray, so if the ray is hitting
+        // the back face, the normal vector should be inverted.
         self.normal = if self.front_face { outward_normal } else { -outward_normal };
     }
 }
