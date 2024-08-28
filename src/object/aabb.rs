@@ -190,7 +190,7 @@ mod test_aabb {
     }
 
     #[test]
-    fn test_aabb_surrounding_box() {
+    fn test_aabb_surrounding_box_1() {
         let box1 = AABB::from_points(
             &Vec3d::new(1.0, 2.0, 3.0),
             &Vec3d::new(4.0, 5.0, 6.0),
@@ -203,6 +203,22 @@ mod test_aabb {
         assert_eq!(aabb.interval_x, Interval { min: 0.0, max: 5.0 });
         assert_eq!(aabb.interval_y, Interval { min: 1.0, max: 6.0 });
         assert_eq!(aabb.interval_z, Interval { min: 2.0, max: 7.0 });
+    }
+
+    #[test]
+    fn test_aabb_surrounding_box_2() {
+        let box1 = AABB::from_points(
+            &Vec3d::new(11.0, 2.0, 3.0),
+            &Vec3d::new(17.0, 15.0, 6.0),
+        );
+        let box2 = AABB::from_points(
+            &Vec3d::new(0.5, 17.4, 21.0),
+            &Vec3d::new(15.3, 46.0, 7.0),
+        );
+        let aabb = AABB::surrounding_box(&box2, &box1);
+        assert_eq!(aabb.interval_x, Interval { min: 0.5, max: 17.0 });
+        assert_eq!(aabb.interval_y, Interval { min: 2.0, max: 46.0 });
+        assert_eq!(aabb.interval_z, Interval { min: 3.0, max: 21.0 });
     }
 
     #[test]
