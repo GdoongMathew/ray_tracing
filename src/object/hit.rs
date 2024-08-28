@@ -140,8 +140,8 @@ impl BVHNode {
         }
         let axis = bbox.longest_axis();
 
-        let left: Arc<Box<dyn Hittable>>;
-        let right: Arc<Box<dyn Hittable>>;
+        let mut left: Arc<Box<dyn Hittable>>;
+        let mut right: Arc<Box<dyn Hittable>>;
 
         let object_span = end - start;
 
