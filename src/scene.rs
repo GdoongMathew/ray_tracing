@@ -4,8 +4,9 @@ use std::sync::Arc;
 use crate::object::{BVHNode, HittableVec, Sphere, Quad};
 use crate::object::material::{Dielectric, Lambertian, Material, Metal, Light};
 use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture, SolidColor};
-use crate::vec3d::Vec3d;
+use crate::vec3d::{Vec3d, Color};
 use rand::Rng;
+use crate::camera::Camera;
 
 pub fn bouncing_balls() -> BVHNode {
     let mut rng = rand::thread_rng();
@@ -126,7 +127,26 @@ pub fn perlin_sphere() -> BVHNode {
 }
 
 
-pub fn quads() -> HittableVec {
+pub fn quads() -> (Camera, BVHNode) {
+    let mut camera = Camera::new();
+
+    camera.set_depth(50);
+    camera.set_aspect_ratio(1.0);
+    camera.set_resolution_width(400);
+    camera.set_samples_per_pixel(100);
+    camera.set_v_fov(80.0);
+
+    camera.set_background_color(
+        Color::new(0.7, 0.8, 1.0)
+    );
+
+    camera.set_look_from(Vec3d::new(0.0, 0.0, 9.0));
+    camera.set_look_at(Vec3d::new(0.0, 0.0, 0.0));
+    camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
+
+    camera.set_defocus_angle(0.0);
+
+
     let mut world = HittableVec::new();
 
     // Material
@@ -213,13 +233,27 @@ pub fn quads() -> HittableVec {
             lower_teal,
         )
     )));
-    world
+    (camera, BVHNode::from_hittable_vec(Arc::new(world)))
 }
 
 
-pub fn simple_light() -> BVHNode {
-    let mut world = HittableVec::new();
+pub fn simple_light() -> (Camera, BVHNode) {
+    let mut camera = Camera::new();
 
+    camera.set_depth(50);
+    camera.set_aspect_ratio(16.0 / 9.0);
+    camera.set_resolution_width(400);
+    camera.set_samples_per_pixel(100);
+
+    camera.set_v_fov(20.0);
+    camera.set_look_from(Vec3d::new(26.0, 3.0, 6.0));
+    camera.set_look_at(Vec3d::new(0.0, 2.0, 0.0));
+    camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
+
+    camera.set_background_color(Vec3d::new(0.0, 0.0, 0.0));
+    camera.set_defocus_angle(0.0);
+
+    let mut world = HittableVec::new();
     let perlin_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(PerlinTexture::new(4.0)));
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(
@@ -240,18 +274,10 @@ pub fn simple_light() -> BVHNode {
     world.add(
         Arc::new(Box::new(Quad::new(
             Vec3d::new(3.0, 1.0, -2.0),
-            Vec3d::new(4.0, 0.0, 0.0),
-            Vec3d::new(0.0, 4.0, 0.0),
+            Vec3d::new(2.0, 0.0, 0.0),
+            Vec3d::new(0.0, 2.0, 0.0),
             light.clone(),
         )))
     );
-    // world.add(
-    //     Arc::new(Box::new(Sphere::static_sphere(
-    //         Vec3d::new(0.0, 7.0, 0.0),
-    //         2.0,
-    //         light.clone(),
-    //     )))
-    // );
-    BVHNode::from_hittable_vec(Arc::new(world))
-    // world
+    (camera, BVHNode::from_hittable_vec(Arc::new(world)))
 }
