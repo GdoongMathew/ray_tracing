@@ -155,7 +155,8 @@ impl BVHNode {
                 right = hittable_vec[start + 1].clone();
             }
             _ => {
-                hittable_vec.sort_by(|a, b| {
+                let mut hit_vec = hittable_vec.clone();
+                hit_vec.sort_by(|a, b| {
                     BVHNode::box_compare(a, b, axis)
                 });
 
@@ -213,5 +214,148 @@ impl Hittable for BVHNode {
 
     fn bounding_box(&self) -> AABB {
         self.bbox.clone()
+    }
+}
+
+
+#[cfg(test)]
+mod bvh_node_test {
+    use super::*;
+    use crate::ray::Interval;
+    use crate::object::{Sphere, Quad};
+
+    #[test]
+    fn test_bvh_node_one_sphere_bounding_box() {
+        let object_vec: Vec<Arc<Box<dyn Hittable>>> = vec![
+            Arc::new(Box::new(Sphere::static_sphere(
+                Vec3d::new(0.0, 0.0, 0.0),
+                1.0,
+                Material::Empty(Empty {}),
+            ))),
+        ];
+        let node = BVHNode::new(
+            object_vec.clone(),
+            0,
+            object_vec.len(),
+        );
+
+        let bbox = node.bounding_box();
+
+        let expect_box = AABB::new(
+            Interval { min: -1.0, max: 1.0 },
+            Interval { min: -1.0, max: 1.0 },
+            Interval { min: -1.0, max: 1.0 }
+        );
+
+        assert_eq!(bbox, expect_box);
+    }
+
+    #[test]
+    fn test_bvh_node_two_sphere_bounding_box() {
+        let object_vec: Vec<Arc<Box<dyn Hittable>>> = vec![
+            Arc::new(Box::new(Sphere::static_sphere(
+                Vec3d::new(-1.0, 0.0, -1.0),
+                1.0,
+                Material::Empty(Empty {}),
+            ))),
+            Arc::new(Box::new(Sphere::static_sphere(
+                Vec3d::new(1.0, 1.0, 0.0),
+                1.0,
+                Material::Empty(Empty {}),
+            ))),
+        ];
+        let node = BVHNode::new(
+            object_vec.clone(),
+            0,
+            object_vec.len(),
+        );
+
+        let bbox = node.bounding_box();
+        let expect_box = AABB::new(
+            Interval { min: -2.0, max: 2.0 },
+            Interval { min: -1.0, max: 2.0 },
+            Interval { min: -2.0, max: 1.0 }
+        );
+
+        assert_eq!(bbox, expect_box);
+    }
+
+    #[test]
+    fn test_bvh_node_one_quad_bounding_box() {
+        let object_vec: Vec<Arc<Box<dyn Hittable>>> = vec![
+            Arc::new(Box::new(Quad::new(
+                Vec3d::new(0.0, 0.0, 0.0),
+                Vec3d::new(1.0, 0.0, 0.0),
+                Vec3d::new(0.0, 1.0, 0.0),
+                Material::Empty(Empty {}),
+            ))),
+        ];
+
+        let node = BVHNode::new(
+            object_vec.clone(),
+            0,
+            object_vec.len(),
+        );
+
+        let bbox = node.bounding_box();
+        let expect_box = AABB::new(
+            Interval { min: 0.0, max: 1.0 },
+            Interval { min: 0.0, max: 1.0 },
+            Interval { min: 0.0, max: 0.0 }
+        );
+        assert_eq!(bbox, expect_box);
+    }
+
+    #[test]
+    fn test_bvh_node_box_compare() {
+        let a: Arc<Box<dyn Hittable>> = Arc::new(Box::new(Sphere::static_sphere(
+            Vec3d::new(-1.0, 0.0, -1.0),
+            1.0,
+            Material::Empty(Empty {}),
+        )));
+        let b: Arc<Box<dyn Hittable>> = Arc::new(Box::new(Sphere::static_sphere(
+            Vec3d::new(1.0, -1.0, 0.0),
+            2.0,
+            Material::Empty(Empty {}),
+        )));
+
+        let result_0 = BVHNode::box_compare(&a, &b, 0);
+        let result_1 = BVHNode::box_compare(&a, &b, 1);
+        let result_2 = BVHNode::box_compare(&a, &b, 2);
+        assert_eq!(result_0, Ordering::Less);
+        assert_eq!(result_1, Ordering::Greater);
+        assert_eq!(result_2, Ordering::Equal);
+    }
+
+    #[test]
+    fn test_bvh_node_box_sort() {
+        let object_vec: Vec<Arc<Box<dyn Hittable>>> = vec![
+            Arc::new(Box::new(Sphere::static_sphere(
+                Vec3d::new(-1.0, 0.0, -1.0),
+                1.0,
+                Material::Empty(Empty {}),
+            ))),
+            Arc::new(Box::new(Sphere::static_sphere(
+                Vec3d::new(1.0, -1.0, 0.0),
+                2.0,
+                Material::Empty(Empty {}),
+            ))),
+        ];
+
+        let mut object_vec_clone = object_vec.clone();
+        object_vec_clone.sort_by(|a, b| {
+            BVHNode::box_compare(a, b, 0)
+        });
+
+        assert!(Arc::ptr_eq(&object_vec[0], &object_vec_clone[0]));
+        assert!(Arc::ptr_eq(&object_vec[1], &object_vec_clone[1]));
+
+        let mut object_vec_clone2 = object_vec.clone();
+        object_vec_clone2.sort_by(|a, b| {
+            BVHNode::box_compare(a, b, 1)
+        });
+
+        assert!(Arc::ptr_eq(&object_vec[0], &object_vec_clone2[1]));
+        assert!(Arc::ptr_eq(&object_vec[1], &object_vec_clone2[0]));
     }
 }
