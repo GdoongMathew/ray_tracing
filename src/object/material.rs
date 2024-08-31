@@ -19,7 +19,7 @@ pub trait Scatterable: Send + Sync {
     fn emitted(&self, _u: f64, _v: f64, _p: &Vec3d) -> Vec3d { Vec3d::zero() }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Material {
     Empty(Empty),
     Light(Light),
@@ -51,7 +51,7 @@ impl Scatterable for Material {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Empty {}
 
 impl Scatterable for Empty {
@@ -93,6 +93,13 @@ impl Scatterable for Light {
     }
 }
 
+impl PartialEq for Light {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.texture, &other.texture)
+    }
+}
+
+
 #[derive(Debug, Clone)]
 pub struct Lambertian {
     texture: Arc<Box<dyn Texture>>,
@@ -127,8 +134,14 @@ impl Scatterable for Lambertian {
     }
 }
 
+impl PartialEq for Lambertian {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.texture, &other.texture)
+    }
+}
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Metal {
     albedo: Vec3d,
     fuss: f64,
@@ -163,7 +176,7 @@ fn reflect(v_in: &Vec3d, normal: &Vec3d) -> Vec3d {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Dielectric {
     refraction_index: f64,
 }

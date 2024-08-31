@@ -61,6 +61,19 @@ impl<'m> HitRecord<'m> {
 }
 
 
+impl PartialEq for HitRecord<'_> {
+    fn eq(&self, other: &Self) -> bool {
+         self.t == other.t &&
+            self.u == other.u &&
+            self.v == other.v &&
+            self.point == other.point &&
+            self.normal == other.normal &&
+            self.front_face == other.front_face &&
+            self.material == other.material
+    }
+}
+
+
 pub trait Hittable: Send + Sync {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitRecord>;
 
@@ -226,12 +239,16 @@ mod bvh_node_test {
 
     #[test]
     fn test_bvh_node_one_sphere_bounding_box() {
+        let sphere = Sphere::static_sphere(
+            Vec3d::new(0.0, 0.0, 0.0),
+            1.0,
+            Material::Empty(Empty {}),
+        );
+
+        let sphere_box = sphere.bounding_box();
+
         let object_vec: Vec<Arc<Box<dyn Hittable>>> = vec![
-            Arc::new(Box::new(Sphere::static_sphere(
-                Vec3d::new(0.0, 0.0, 0.0),
-                1.0,
-                Material::Empty(Empty {}),
-            ))),
+            Arc::new(Box::new(sphere)),
         ];
         let node = BVHNode::new(
             object_vec.clone(),
@@ -248,6 +265,7 @@ mod bvh_node_test {
         );
 
         assert_eq!(bbox, expect_box);
+        assert_eq!(bbox, sphere_box);
     }
 
     #[test]
@@ -282,13 +300,17 @@ mod bvh_node_test {
 
     #[test]
     fn test_bvh_node_one_quad_bounding_box() {
+        let quad = Quad::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            Vec3d::new(1.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            Material::Empty(Empty {}),
+        );
+
+        let quad_box = quad.bounding_box();
+
         let object_vec: Vec<Arc<Box<dyn Hittable>>> = vec![
-            Arc::new(Box::new(Quad::new(
-                Vec3d::new(0.0, 0.0, 0.0),
-                Vec3d::new(1.0, 0.0, 0.0),
-                Vec3d::new(0.0, 1.0, 0.0),
-                Material::Empty(Empty {}),
-            ))),
+            Arc::new(Box::new(quad)),
         ];
 
         let node = BVHNode::new(
@@ -304,6 +326,7 @@ mod bvh_node_test {
             Interval { min: 0.0, max: 0.0 }
         );
         assert_eq!(bbox, expect_box);
+        assert_eq!(bbox, quad_box);
     }
 
     #[test]
