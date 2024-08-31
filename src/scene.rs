@@ -270,7 +270,7 @@ pub fn simple_light() -> (Camera, BVHNode) {
         )))
     );
 
-    let light = Material::Light(Light::new(Vec3d::new(4.0, 4.0, 4.0)));
+    let light = Material::Light(Light::from_color(Vec3d::new(4.0, 4.0, 4.0)));
     world.add(
         Arc::new(Box::new(Quad::new(
             Vec3d::new(3.0, 1.0, -2.0),

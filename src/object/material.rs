@@ -1,5 +1,5 @@
 use rand::random;
-use crate::vec3d::{Vec3d, dot};
+use crate::vec3d::{Vec3d, Color, dot};
 use crate::ray::Ray;
 use crate::object::hit::HitRecord;
 
@@ -71,12 +71,12 @@ pub struct Light {
 }
 
 impl Light {
-    pub fn new(color: Vec3d) -> Self {
+    pub fn from_color(color: Color) -> Self {
         let texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(SolidColor::new(color)));
-        Self::from_texture(texture)
+        Self::new(texture)
     }
 
-    pub fn from_texture(texture: Arc<Box<dyn Texture>>) -> Self {
+    pub fn new(texture: Arc<Box<dyn Texture>>) -> Self {
         Self { texture }
     }
 }
