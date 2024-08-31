@@ -67,19 +67,8 @@ impl AABB {
     pub fn hit(&self, ray: &Ray, interval: &Interval) -> bool {
         for axis in 0..3 {
             let ax = self.axis_interval(axis);
-            let adinv = 1.0 / match axis {
-                0 => ray.direction.x(),
-                1 => ray.direction.y(),
-                2 => ray.direction.z(),
-                _ => panic!("Invalid axis: {}", axis),
-            };
-
-            let origin_axis = match axis {
-                0 => ray.origin.x(),
-                1 => ray.origin.y(),
-                2 => ray.origin.z(),
-                _ => panic!("Invalid axis: {}", axis),
-            };
+            let adinv = 1.0 / ray.direction[axis];
+            let origin_axis = ray.origin[axis];
 
             let t0 = (ax.min - origin_axis) * adinv;
             let t1 = (ax.max - origin_axis) * adinv;
