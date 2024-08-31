@@ -226,4 +226,20 @@ mod test_interval {
         assert_eq!(Interval::UNIVERSE.min, f64::NEG_INFINITY);
         assert_eq!(Interval::UNIVERSE.max, f64::INFINITY);
     }
+
+    #[test]
+    fn test_interval_expand() {
+        let interval = Interval { min: 1.0, max: 2.0 };
+        let result = interval.expand(0.5);
+        assert_eq!(result.min, 0.75);
+        assert_eq!(result.max, 2.25);
+    }
+
+    #[test]
+    fn test_interval_expand() {
+        let interval = Interval { min: 0.0, max: 2.8 };
+        let result = interval.expand(1.2);
+        assert_eq!(result.min, -0.6);
+        assert_eq!(result.max, 3.4);
+    }
 }
