@@ -228,7 +228,7 @@ mod test_interval {
     }
 
     #[test]
-    fn test_interval_expand() {
+    fn test_interval_expand_1() {
         let interval = Interval { min: 1.0, max: 2.0 };
         let result = interval.expand(0.5);
         assert_eq!(result.min, 0.75);
@@ -236,7 +236,7 @@ mod test_interval {
     }
 
     #[test]
-    fn test_interval_expand() {
+    fn test_interval_expand_2() {
         let interval = Interval { min: 0.0, max: 2.8 };
         let result = interval.expand(1.2);
         assert_eq!(result.min, -0.6);
