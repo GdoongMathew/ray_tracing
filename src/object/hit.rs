@@ -381,4 +381,72 @@ mod bvh_node_test {
         assert!(Arc::ptr_eq(&object_vec[0], &object_vec_clone2[1]));
         assert!(Arc::ptr_eq(&object_vec[1], &object_vec_clone2[0]));
     }
+
+    #[test]
+    fn test_bvh_node_hit_one_sphere() {
+        let object_vec: Vec<Arc<Box<dyn Hittable>>> = vec![
+            Arc::new(Box::new(Sphere::static_sphere(
+                Vec3d::new(0.0, 0.0, 0.0),
+                1.0,
+                Material::Empty(Empty {}),
+            ))),
+        ];
+
+        let node = BVHNode::new(
+            object_vec.clone(),
+            0,
+            object_vec.len(),
+        );
+
+        let ray = Ray::new(
+            Vec3d::new(0.0, 0.0, 0.0),
+            Vec3d::new(1.0, 0.0, 0.0),
+            0.0,
+        );
+        let interval = Interval { min: 0.0, max: f64::INFINITY };
+
+        let hit_record = node.hit(&ray, &interval);
+        let original_object_hit_record = object_vec[0].hit(&ray, &interval);
+
+        assert!(hit_record.is_some());
+        assert_eq!(hit_record.unwrap(), original_object_hit_record.unwrap());
+    }
+
+    #[test]
+    fn test_bvh_node_hit_one_quad_1() {
+        let object_vec: Vec<Arc<Box<dyn Hittable>>> = vec![
+            Arc::new(Box::new(Quad::new(
+                Point3d::zero(),
+                Vec3d::new(1.0, 0.0, 0.0),
+                Vec3d::new(0.0, 1.0, 0.0),
+                Material::Empty(Empty {}),
+            ))),
+        ];
+
+        let node = BVHNode::new(
+            object_vec.clone(),
+            0,
+            object_vec.len(),
+        );
+
+        let ray = Ray::new(
+            Vec3d::new(0.5, 0.5, -2.0),
+            Vec3d::new(0.0, 0.0, 1.0),
+            0.0,
+        );
+        let interval = Interval { min: 0.0, max: 4.0 };
+
+        let hit_record = node.hit(&ray, &interval);
+        let original_object_hit_record = object_vec[0].hit(&ray, &interval);
+
+        assert!(hit_record.is_some());
+
+        let hit_record = hit_record.unwrap();
+        let original_object_hit_record = original_object_hit_record.unwrap();
+
+        assert_eq!(hit_record.t, 2.0);
+        assert_eq!(hit_record.point, Point3d::new(0.5, 0.5, 0.0));
+        assert_eq!(hit_record.normal, Vec3d::new(0.0, 0.0, -1.0));
+        assert_eq!(hit_record, original_object_hit_record);
+    }
 }
