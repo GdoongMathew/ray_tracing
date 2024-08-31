@@ -1,4 +1,4 @@
-use crate::vec3d::{Vec3d, dot};
+use crate::vec3d::{Point3d, Vec3d, dot};
 use crate::ray::{Ray, Interval};
 use crate::object::aabb::AABB;
 use super::material::{Material, Empty};
@@ -16,7 +16,7 @@ pub struct HitRecord<'m> {
     pub u: f64,
     pub v: f64,
 
-    pub point: Vec3d,
+    pub point: Point3d,
     pub normal: Vec3d,
     pub front_face: bool,
 
@@ -24,7 +24,7 @@ pub struct HitRecord<'m> {
 }
 
 impl<'m> HitRecord<'m> {
-    pub fn new(material: &'m Material, t: f64, u: f64, v: f64, point: Vec3d) -> Self {
+    pub fn new(material: &'m Material, t: f64, u: f64, v: f64, point: Point3d) -> Self {
         Self {
             t,
             u,
@@ -44,7 +44,7 @@ impl<'m> HitRecord<'m> {
             0.0,
             0.0,
             0.0,
-            Vec3d::zero(),
+            Point3d::zero(),
         )
     }
 
