@@ -35,9 +35,10 @@ impl AABB {
     }
 
     fn pad_to_minimum(&mut self) {
-        if self.interval_x.size() < f64::EPSILON { self.interval_x = self.interval_x.expand(f64::EPSILON); }
-        if self.interval_y.size() < f64::EPSILON { self.interval_y = self.interval_y.expand(f64::EPSILON); }
-        if self.interval_z.size() < f64::EPSILON { self.interval_z = self.interval_z.expand(f64::EPSILON); }
+        let min = f32::EPSILON as f64;
+        if self.interval_x.size() < min { self.interval_x = self.interval_x.expand(min); }
+        if self.interval_y.size() < min { self.interval_y = self.interval_y.expand(min); }
+        if self.interval_z.size() < min { self.interval_z = self.interval_z.expand(min); }
     }
 
 
@@ -67,8 +68,18 @@ impl AABB {
     pub fn hit(&self, ray: &Ray, interval: &Interval) -> bool {
         for axis in 0..3 {
             let ax = self.axis_interval(axis);
-            let adinv = 1.0 / ray.direction[axis];
             let origin_axis = ray.origin[axis];
+            let ray_dir = ray.direction[axis];
+
+            if ray_dir.abs() < f64::EPSILON {
+                // Ray is parallel to the axis. Check if the origin is within the interval.
+                if origin_axis < ax.min || origin_axis > ax.max {
+                    return false;
+                }
+                continue
+            }
+
+            let adinv = 1.0 / ray_dir;
 
             let t0 = (ax.min - origin_axis) * adinv;
             let t1 = (ax.max - origin_axis) * adinv;
