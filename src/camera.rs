@@ -1,5 +1,5 @@
-use crate::vec3d::{Vec3d, cross};
-use crate::object::{HittableVec, Hittable};
+use crate::vec3d::{Vec3d, Color, Point3d, cross};
+use crate::object::Hittable;
 use crate::ray::{Ray, Interval};
 use rand::Rng;
 use crate::object::material::Scatterable;
@@ -11,7 +11,7 @@ use std::sync::mpsc;
 
 #[derive(Copy, Clone)]
 pub struct Camera {
-    center: Vec3d,
+    center: Point3d,
     aspect_ratio: f64,
 
     resolution: (i32, i32),
@@ -27,7 +27,7 @@ pub struct Camera {
 
     v_fov: f64, // Vertical field of view in degrees.
 
-    look_from: Vec3d,   // Point camera is looking from
+    look_from: Point3d,   // Point camera is looking from
     look_at: Vec3d,     // Point camera is looking at
     v_up: Vec3d,        // Camera-relative up vector
 
@@ -35,7 +35,7 @@ pub struct Camera {
     defocus_radius: f64,
     focus_dist: f64,
 
-    background_color: Vec3d,
+    background_color: Color,
 
 }
 
@@ -56,12 +56,12 @@ fn random_in_unit_disk() -> Vec3d {
 
 impl Camera {
     pub fn new() -> Self {
-        let center = Vec3d::zero();
+        let center = Point3d::zero();
         let aspect_ratio = 16.0 / 9.0;
         let image_width = 1080;
         let v_fov: f64 = 90.0;
 
-        let look_from = Vec3d::new(0.0, 0.0, 0.0);
+        let look_from = Point3d::new(0.0, 0.0, 0.0);
         let look_at = Vec3d::new(0.0, 0.0, -1.0);
         let v_up = Vec3d::new(0.0, 1.0, 0.0);
         let focal_length = (look_from - look_at).length();
@@ -93,7 +93,7 @@ impl Camera {
             defocus_angle: 0.0,
             defocus_radius: 0.0,
             focus_dist: 10.0,
-            background_color: Vec3d::zero(),
+            background_color: Color::zero(),
         }
     }
 
@@ -150,7 +150,7 @@ impl Camera {
 
     pub fn set_focus_dist(&mut self, focus_dist: f64) -> () { self.focus_dist = focus_dist; }
 
-    pub fn set_background_color(&mut self, color: Vec3d) -> () { self.background_color = color; }
+    pub fn set_background_color(&mut self, color: Color) -> () { self.background_color = color; }
 
     fn defocus_disk_u(&self) -> Vec3d { self.u() * self.defocus_radius }
 
@@ -174,11 +174,11 @@ impl Camera {
         self.viewport_v / self.resolution_height() as f64
     }
 
-    pub fn viewport_upper_left(&self) -> Vec3d {
+    pub fn viewport_upper_left(&self) -> Point3d {
         self.center - self.w() * self.focus_dist - self.viewport_u / 2.0 - self.viewport_v / 2.0
     }
 
-    pub fn pixel_upper_left(&self) -> Vec3d {
+    pub fn pixel_upper_left(&self) -> Point3d {
         self.viewport_upper_left() + (self.pixel_delta_u() + self.pixel_delta_v()) * 0.5
     }
 
@@ -186,12 +186,12 @@ impl Camera {
     /// # Arguments
     /// * `w` - The width coordinate of the pixel.
     /// * `h` - The height coordinate of the pixel.
-    pub fn pixel_coords(&self, w: f64, h: f64) -> Vec3d {
+    pub fn pixel_coords(&self, w: f64, h: f64) -> Point3d {
         self.pixel_upper_left() + self.pixel_delta_u() * w + self.pixel_delta_v() * h
     }
 
-    fn ray_color<H: Hittable>(ray: &Ray, world: &H, depth: i32, background: &Vec3d) -> Vec3d {
-        if depth <= 0 { return Vec3d::zero(); }
+    fn ray_color<H: Hittable>(ray: &Ray, world: &H, depth: i32, background: &Color) -> Color {
+        if depth <= 0 { return Color::zero(); }
 
         if let Some(hit_record) = world.hit(ray, &Interval { min: 0.0001, max: f64::INFINITY }) {
             let emitted = hit_record.material.emitted(hit_record.u, hit_record.v, &hit_record.point);

@@ -6,7 +6,7 @@ use crate::object::hit::HitRecord;
 use std::sync::Arc;
 use crate::object::texture::{Texture, SolidColor};
 
-type Scattered = Option<(Ray, Vec3d)>;
+type Scattered = Option<(Ray, Color)>;
 
 
 pub trait Scatterable: Send + Sync {
@@ -16,7 +16,7 @@ pub trait Scatterable: Send + Sync {
         hit_record: &HitRecord,
     ) -> Scattered;
 
-    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3d) -> Vec3d { Vec3d::zero() }
+    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3d) -> Color { Color::zero() }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -43,10 +43,10 @@ impl Scatterable for Material {
         }
     }
 
-    fn emitted(&self, u: f64, v: f64, p: &Vec3d) -> Vec3d {
+    fn emitted(&self, u: f64, v: f64, p: &Vec3d) -> Color {
         match self {
             Material::Light(li) => li.emitted(u, v, p),
-            _ => Vec3d::zero(),
+            _ => Color::zero(),
         }
     }
 }
@@ -88,7 +88,7 @@ impl Scatterable for Light {
         hit_record: &HitRecord,
     ) -> Scattered { None }
 
-    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3d) -> Vec3d {
+    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3d) -> Color {
         self.texture.value(_u, _v, _p)
     }
 }
@@ -143,12 +143,12 @@ impl PartialEq for Lambertian {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Metal {
-    albedo: Vec3d,
+    albedo: Color,
     fuss: f64,
 }
 
 impl Metal {
-    pub fn new(albedo: Vec3d, fuss: f64) -> Self {
+    pub fn new(albedo: Color, fuss: f64) -> Self {
         if fuss > 1.0 {
             panic!("Fuss must be less than 1.0, get {} instead.", fuss);
         }
@@ -209,7 +209,7 @@ impl Scatterable for Dielectric {
             refract(&unit_direction, &hit_record.normal, ri)
         };
 
-        let attenuation = Vec3d::new(1.0, 1.0, 1.0);
+        let attenuation = Color::new(1.0, 1.0, 1.0);
         let scattered = Ray::new(hit_record.point, direction, ray_in.time);
         Some((scattered, attenuation))
     }
