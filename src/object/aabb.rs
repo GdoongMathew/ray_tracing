@@ -252,4 +252,39 @@ mod test_aabb {
         assert_ne!(aabb.interval_y.size(), 0.0);
         assert_ne!(aabb.interval_z.size(), 0.0);
     }
+
+    #[test]
+    fn test_aabb_hit_1() {
+        let aabb = AABB::new(
+            Interval { min: -1.0, max: 1.0 },
+            Interval { min: -1.0, max: 1.0 },
+            Interval { min: -1.0, max: 1.0 },
+        );
+
+        let ray = Ray::new(
+            Vec3d::new(0.0, -5.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            0.0,
+        );
+
+        assert!(aabb.hit(&ray, &Interval { min: 0.0, max: 10.0 }));
+        assert!(!aabb.hit(&ray, &Interval { min: 10.0, max: 20.0 }));
+    }
+
+    #[test]
+    fn test_aabb_hit_2() {
+        let aabb = AABB::new(
+            Interval { min: -1.0, max: 1.0 },
+            Interval { min: -1.0, max: 1.0 },
+            Interval { min: -1.0, max: 1.0 },
+        );
+
+        let ray = Ray::new(
+            Vec3d::new(2.0, 0.0, 0.0),
+            Vec3d::new(0.0, 1.0, 0.0),
+            0.0,
+        );
+
+        assert!(!aabb.hit(&ray, &Interval { min: 0.0, max: 10.0 }));
+    }
 }
