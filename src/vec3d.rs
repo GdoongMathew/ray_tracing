@@ -1,5 +1,17 @@
 use std::fmt::Formatter;
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign, Neg};
+use std::ops::{
+    Add,
+    AddAssign,
+    Sub,
+    SubAssign,
+    Mul,
+    MulAssign,
+    Div,
+    DivAssign,
+    Neg,
+    Index,
+    IndexMut,
+};
 use rand::Rng;
 use rand::distr::{Distribution, Standard};
 
@@ -578,6 +590,41 @@ impl DivAssign<f64> for Vec3d {
         *self *= 1.0 / rhs;
     }
 }
+
+
+/// Indexing overloading for Vec3d
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let vec = Vec3d::new(1.0, 2.0, 3.0);
+/// assert_eq!(vec[0], 1.0);
+/// assert_eq!(vec[1], 2.0);
+/// assert_eq!(vec[2], 3.0);
+/// ```
+impl Index<usize> for Vec3d {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.vector[index]
+    }
+}
+
+/// Mutable indexing overloading for Vec3d
+/// # Examples
+/// ```
+/// use ray_tracing::vec3d::Vec3d;
+/// let mut vec = Vec3d::new(1.0, 2.0, 3.0);
+/// vec[0] = 4.0;
+/// vec[1] = 5.0;
+/// vec[2] = 6.0;
+/// assert_eq!(vec, Vec3d::new(4.0, 5.0, 6.0));
+/// ```
+impl IndexMut<usize> for Vec3d {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.vector[index]
+    }
+}
+
 
 #[cfg(test)]
 mod vec3d_tests {
