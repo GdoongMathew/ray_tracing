@@ -42,21 +42,9 @@ impl AABB {
 
 
     pub fn from_points(pt1: &Vec3d, pt2: &Vec3d) -> Self {
-        let interval_x = if pt1.x() <= pt2.x() {
-            Interval { min: pt1.x(), max: pt2.x() }
-        } else {
-            Interval { min: pt2.x(), max: pt1.x() }
-        };
-        let interval_y = if pt1.y() <= pt2.y() {
-            Interval { min: pt1.y(), max: pt2.y() }
-        } else {
-            Interval { min: pt2.y(), max: pt1.y() }
-        };
-        let interval_z = if pt1.z() <= pt2.z() {
-            Interval { min: pt1.z(), max: pt2.z() }
-        } else {
-            Interval { min: pt2.z(), max: pt1.z() }
-        };
+        let interval_x = Interval { min: pt1.x().min(pt2.x()), max: pt1.x().max(pt2.x()) };
+        let interval_y = Interval { min: pt1.y().min(pt2.y()), max: pt1.y().max(pt2.y()) };
+        let interval_z = Interval { min: pt1.z().min(pt2.z()), max: pt1.z().max(pt2.z()) };
         Self::new(interval_x, interval_y, interval_z)
     }
 
