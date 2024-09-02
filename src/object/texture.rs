@@ -1,4 +1,4 @@
-use crate::vec3d::{Vec3d, dot};
+use crate::vec3d::{Vec3d, Color, dot};
 use std::sync::Arc;
 use image;
 
@@ -10,12 +10,12 @@ use rand::Rng;
 
 
 pub trait Texture: Send + Sync + Debug {
-    fn value(&self, u: f64, v: f64, p: &Vec3d) -> Vec3d;
+    fn value(&self, u: f64, v: f64, p: &Vec3d) -> Color;
 }
 
 #[derive(Clone, Copy)]
 pub struct SolidColor {
-    color: Vec3d,
+    color: Color,
 }
 
 impl SolidColor {
@@ -31,7 +31,7 @@ impl Debug for SolidColor {
 }
 
 impl Texture for SolidColor {
-    fn value(&self, _u: f64, _v: f64, _p: &Vec3d) -> Vec3d {
+    fn value(&self, _u: f64, _v: f64, _p: &Vec3d) -> Color {
         self.color
     }
 }
@@ -73,7 +73,7 @@ impl Debug for Checker {
 
 
 impl Texture for Checker {
-    fn value(&self, u: f64, v: f64, p: &Vec3d) -> Vec3d {
+    fn value(&self, u: f64, v: f64, p: &Vec3d) -> Color {
         let p_val = *p * self.inv_scale;
 
         let x_int = p_val.x().floor() as i32;
@@ -114,7 +114,7 @@ impl Debug for ImageTexture {
 
 
 impl Texture for ImageTexture {
-    fn value(&self, u: f64, v: f64, _p: &Vec3d) -> Vec3d {
+    fn value(&self, u: f64, v: f64, _p: &Vec3d) -> Color {
         if self.image.height() <= 0 || self.image.width() <= 0 {
             return Vec3d::new(0.0, 1.0, 1.0);
         }
@@ -245,7 +245,41 @@ impl PerlinTexture {
 
 
 impl Texture for PerlinTexture {
-    fn value(&self, _u: f64, _v: f64, p: &Vec3d) -> Vec3d {
+    fn value(&self, _u: f64, _v: f64, p: &Vec3d) -> Color {
         Vec3d::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z() + 10.0 * self.turbulence(p, 7)).sin())
+    }
+}
+
+
+#[cfg(test)]
+mod test_texture{
+    use super::*;
+
+    #[test]
+    fn test_solid_color_1() {
+        let color = Color::new(1.0, 0.0, 0.0);
+        let solid_color = SolidColor::new(color);
+        let result = solid_color.value(0.0, 0.0, &Vec3d::zero());
+        assert_eq!(result, color);
+    }
+
+    #[test]
+    fn test_solid_color_2() {
+        let color = Color::new(0.0, 1.0, 0.0);
+        let solid_color = SolidColor::new(color);
+        let result = solid_color.value(1.0, 0.7, &Vec3d::zero());
+        assert_eq!(result, color);
+    }
+
+    #[test]
+    fn test_checker_1() {
+        let color1 = Color::new(1.0, 0.0, 0.0);
+        let color2 = Color::new(0.0, 1.0, 0.0);
+        let checker = Checker::from_color(color1, color2, 1.0);
+        let result = checker.value(0.0, 0.0, &Vec3d::zero());
+        assert_eq!(result, color1);
+
+        let result = checker.value(0.0, 0.0, &Vec3d::new(1.0, 1.0, 1.0));
+        assert_eq!(result, color2);
     }
 }
