@@ -104,7 +104,23 @@ pub fn earth() -> BVHNode {
 }
 
 
-pub fn perlin_sphere() -> BVHNode {
+pub fn perlin_sphere() -> (Camera, BVHNode) {
+    let mut camera = Camera::new();
+    camera.set_aspect_ratio(16.0 / 9.0);
+    camera.set_resolution_width(400);
+    camera.set_samples_per_pixel(100);
+    camera.set_depth(50);
+
+    camera.set_v_fov(20.0);
+    camera.set_look_from(Vec3d::new(13.0, 2.0, 3.0));
+    camera.set_look_at(Vec3d::new(0.0, 0.0, 0.0));
+    camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
+
+    camera.set_defocus_angle(0.0);
+    camera.set_background_color(
+        Color::new(0.7, 0.8, 1.0)
+    );
+
     let mut world = HittableVec::new();
 
     let perlin_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(PerlinTexture::new(4.0)));
@@ -123,7 +139,7 @@ pub fn perlin_sphere() -> BVHNode {
         )))
     );
 
-    BVHNode::from_hittable_vec(Arc::new(world))
+    (camera, BVHNode::from_hittable_vec(Arc::new(world)))
 }
 
 
@@ -254,7 +270,9 @@ pub fn simple_light() -> (Camera, BVHNode) {
     camera.set_defocus_angle(0.0);
 
     let mut world = HittableVec::new();
-    let perlin_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(PerlinTexture::new(4.0)));
+    let perlin_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(
+        PerlinTexture::new(4.0)
+    ));
     world.add(
         Arc::new(Box::new(Sphere::static_sphere(
             Vec3d::new(0.0, -1000.0, 0.0),
@@ -278,6 +296,15 @@ pub fn simple_light() -> (Camera, BVHNode) {
             Vec3d::new(0.0, 2.0, 0.0),
             light.clone(),
         )))
+    );
+    world.add(
+        Arc::new(Box::new(
+            Sphere::static_sphere(
+                Vec3d::new(0.0, 7.0, 0.0),
+                2.0,
+                light.clone(),
+            )
+        ))
     );
     (camera, BVHNode::from_hittable_vec(Arc::new(world)))
 }
