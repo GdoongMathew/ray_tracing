@@ -122,7 +122,7 @@ impl Scatterable for Lambertian {
         ray_in: &Ray,
         hit_record: &HitRecord,
     ) -> Scattered {
-        let mut scatter_direction = hit_record.normal + Vec3d::random().unit_vector();
+        let mut scatter_direction = hit_record.normal + Vec3d::random_unit_vector();
 
         // Catch degenerate scatter direction
         if scatter_direction.near_zero() {
@@ -163,7 +163,7 @@ impl Scatterable for Metal {
         hit_record: &HitRecord,
     ) -> Scattered {
         let mut reflected = reflect(&ray_in.direction, &hit_record.normal);
-        reflected = reflected.unit_vector() + Vec3d::random().unit_vector() * self.fuss;
+        reflected = reflected.unit_vector() + Vec3d::random_unit_vector() * self.fuss;
 
         let ray = Ray::new(hit_record.point, reflected, ray_in.time);
         let dot = dot(&ray.direction, &hit_record.normal);
@@ -336,13 +336,13 @@ mod test_scatter_fn {
 #[cfg(test)]
 mod test_material {
     use super::*;
-    use crate::vec3d::Vec3d;
+    use crate::vec3d::{Point3d, Vec3d};
 
     #[test]
     fn test_empty_material() {
         let empty = Empty {};
         let ray_in = Ray::new(
-            Vec3d::zero(),
+            Point3d::zero(),
             Vec3d::zero(),
             0.0,
         );
