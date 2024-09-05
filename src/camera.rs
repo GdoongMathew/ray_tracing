@@ -39,20 +39,6 @@ pub struct Camera {
 
 }
 
-fn random_in_unit_disk() -> Vec3d {
-    let mut rng = rand::thread_rng();
-    loop {
-        let p = Vec3d::new(
-            rng.gen_range(-1.0..1.0),
-            rng.gen_range(-1.0..1.0),
-            0.0,
-        );
-        if p.length_squared() < 1.0 {
-            return p;
-        }
-    }
-}
-
 
 impl Camera {
     pub fn new() -> Self {
@@ -235,7 +221,7 @@ impl Camera {
     }
 
     fn defocus_disk_sample(&self) -> Vec3d {
-        let p = random_in_unit_disk();
+        let p = Vec3d::random_in_unit_disk();
         self.center + self.defocus_disk_u() * p.x() + self.defocus_disk_v() * p.y()
     }
 

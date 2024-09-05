@@ -115,9 +115,29 @@ impl Vec3d {
         )
     }
 
+    pub fn random_unit_vector() -> Self {
+        loop {
+            let p = Vec3d::gen_range(-1.0, 1.0);
+            let length_squared = p.length_squared();
+            if (1e-160 < length_squared) && (length_squared < 1.0) {
+                return p / length_squared.sqrt();
+            }
+        }
+    }
+
     pub fn random_in_unit_sphere() -> Self {
         loop {
             let p = Vec3d::gen_range(-1.0, 1.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
+
+    pub fn random_in_unit_disk() -> Self {
+        loop {
+            let mut p = Vec3d::gen_range(-1.0, 1.0);
+            p[2] = 0.0;
             if p.length_squared() < 1.0 {
                 return p;
             }
