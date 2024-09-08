@@ -1,7 +1,7 @@
 #[forbid(unsafe_code)]
 
 use std::sync::Arc;
-use crate::object::{BVHNode, HittableVec, Sphere, Quad, bbox, Hittable};
+use crate::object::{BVHNode, HittableVec, Sphere, Quad, bbox, Hittable, Translate, RotateY};
 use crate::object::material::{Dielectric, Lambertian, Material, Metal, Light};
 use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture, SolidColor};
 use crate::vec3d::{Vec3d, Color, Point3d};
@@ -354,22 +354,40 @@ pub fn cornell_box() -> (Camera, BVHNode) {
         white.clone(),
     ))));
 
-    world.add(
-        Arc::new(Box::new(bbox(
-            Point3d::new(130.0, 0.0, 65.0),
-            Point3d::new(295.0, 165.0, 230.0),
-            white.clone(),
-        )))
+    let box1 = bbox(
+        Point3d::zero(),
+        Point3d::new(165.0, 330.0, 165.0),
+        white.clone(),
+    );
+    let box1: Arc<Box<dyn Hittable>> = Arc::new(Box::new(RotateY::new(
+        Arc::new(Box::new(box1)),
+        15.0,
+    )));
+
+    let box1: Arc<Box<dyn Hittable>> = Arc::new(Box::new(Translate::new(
+        box1,
+        Vec3d::new(265.0, 0.0, 295.0),
+    )));
+
+    world.add(box1);
+
+    let box2 = bbox(
+        Point3d::zero(),
+        Point3d::new(165.0, 165.0, 165.0),
+        white.clone(),
     );
 
-    world.add(
-        Arc::new(Box::new(bbox(
-            Point3d::new(265.0, 0.0, 295.0),
-            Point3d::new(430.0, 330.0, 460.0),
-            white.clone(),
-        )))
-    );
+    let box2: Arc<Box<dyn Hittable>> = Arc::new(Box::new(RotateY::new(
+        Arc::new(Box::new(box2)),
+        -18.0,
+    )));
 
+    let box2: Arc<Box<dyn Hittable>> = Arc::new(Box::new(Translate::new(
+        box2,
+        Vec3d::new(130.0, 0.0, 65.0),
+    )));
+
+    world.add(box2);
 
     let mut camera = Camera::new();
 
