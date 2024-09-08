@@ -26,6 +26,7 @@ pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
     Dielectric(Dielectric),
+    Isotropic(Isotropic),
 }
 
 impl Scatterable for Material {
@@ -40,6 +41,7 @@ impl Scatterable for Material {
             Material::Lambertian(l) => l.scatter(ray_in, hit_record),
             Material::Metal(metal) => metal.scatter(ray_in, hit_record),
             Material::Dielectric(d) => d.scatter(ray_in, hit_record),
+            Material::Isotropic(i) => i.scatter(ray_in, hit_record),
         }
     }
 
@@ -185,6 +187,42 @@ pub struct Dielectric {
 impl Dielectric {
     pub fn new(refraction_index: f64) -> Self {
         Self { refraction_index }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct Isotropic {
+    texture: Arc<Box<dyn Texture>>,
+}
+
+
+impl Isotropic {
+    pub fn from_color(albedo: Color) -> Self {
+        let texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(SolidColor::new(albedo)));
+        Self::new(texture)
+    }
+
+    pub fn new(texture: Arc<Box<dyn Texture>>) -> Self {
+        Self { texture }
+    }
+}
+
+impl Scatterable for Isotropic {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: &HitRecord,
+    ) -> Scattered {
+        let attenuation = self.texture.value(hit_record.u, hit_record.v, &hit_record.point);
+        let scattered = Ray::new(hit_record.point, Vec3d::random_unit_vector(), ray_in.time);
+        Some((scattered, attenuation))
+    }
+}
+
+impl PartialEq for Isotropic {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.texture, &other.texture)
     }
 }
 
