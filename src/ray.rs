@@ -1,4 +1,5 @@
 use crate::vec3d::{Vec3d, Point3d};
+use std::ops::{Add, Sub};
 
 
 /// A ray is a line that starts at a point and goes in a direction.
@@ -174,6 +175,58 @@ impl Interval {
     pub const UNIVERSE: Interval = Interval { min: f64::NEG_INFINITY, max: f64::INFINITY };
 }
 
+impl Add<f64> for Interval {
+    type Output = Self;
+
+    fn add(self, t: f64) -> Self {
+        Self { min: self.min + t, max: self.max + t }
+    }
+}
+
+
+impl Add<Interval> for Interval {
+    type Output = Self;
+
+    fn add(self, other: Interval) -> Self {
+        Self { min: self.min + other.min, max: self.max + other.max }
+    }
+}
+
+
+impl Add<&Interval> for Interval {
+    type Output = Self;
+
+    fn add(self, other: &Interval) -> Self {
+        Self { min: self.min + other.min, max: self.max + other.max }
+    }
+}
+
+
+impl Sub<f64> for Interval {
+    type Output = Self;
+
+    fn sub(self, t: f64) -> Self {
+        Self { min: self.min - t, max: self.max - t }
+    }
+}
+
+impl Sub<Interval> for Interval {
+    type Output = Self;
+
+    fn sub(self, other: Interval) -> Self {
+        Self { min: self.min - other.min, max: self.max - other.max }
+    }
+}
+
+
+impl Sub<&Interval> for Interval {
+    type Output = Self;
+
+    fn sub(self, other: &Interval) -> Self {
+        Self { min: self.min - other.min, max: self.max - other.max }
+    }
+}
+
 
 #[cfg(test)]
 mod test_interval {
@@ -241,5 +294,57 @@ mod test_interval {
         let result = interval.expand(1.2);
         assert_eq!(result.min, -0.6);
         assert_eq!(result.max, 3.4);
+    }
+
+    #[test]
+    fn test_interval_add() {
+        let interval = Interval { min: 1.0, max: 2.0 };
+        let result = interval + 0.5;
+        assert_eq!(result.min, 1.5);
+        assert_eq!(result.max, 2.5);
+    }
+
+    #[test]
+    fn test_interval_add_interval() {
+        let interval_1 = Interval { min: 1.0, max: 2.0 };
+        let interval_2 = Interval { min: 3.0, max: 4.0 };
+        let result = interval_1 + interval_2;
+        assert_eq!(result.min, 4.0);
+        assert_eq!(result.max, 6.0);
+    }
+
+    #[test]
+    fn test_interval_add_interval_ref() {
+        let interval_1 = Interval { min: 1.0, max: 2.0 };
+        let interval_2 = Interval { min: 3.0, max: 4.0 };
+        let result = interval_1 + &interval_2;
+        assert_eq!(result.min, 4.0);
+        assert_eq!(result.max, 6.0);
+    }
+
+    #[test]
+    fn test_interval_sub() {
+        let interval = Interval { min: 1.0, max: 2.0 };
+        let result = interval - 0.5;
+        assert_eq!(result.min, 0.5);
+        assert_eq!(result.max, 1.5);
+    }
+
+    #[test]
+    fn test_interval_sub_interval() {
+        let interval_1 = Interval { min: 1.0, max: 2.0 };
+        let interval_2 = Interval { min: 3.0, max: 4.0 };
+        let result = interval_1 - interval_2;
+        assert_eq!(result.min, -2.0);
+        assert_eq!(result.max, -2.0);
+    }
+
+    #[test]
+    fn test_interval_sub_interval_ref() {
+        let interval_1 = Interval { min: 1.0, max: 2.0 };
+        let interval_2 = Interval { min: 3.0, max: 4.0 };
+        let result = interval_1 - &interval_2;
+        assert_eq!(result.min, -2.0);
+        assert_eq!(result.max, -2.0);
     }
 }

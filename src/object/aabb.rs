@@ -1,5 +1,6 @@
 use crate::ray::{Interval, Ray};
 use crate::vec3d::Vec3d;
+use std::ops::{Add, Sub};
 
 
 /// Axis-aligned bounding box.
@@ -12,6 +13,68 @@ pub struct AABB {
     interval_x: Interval,
     interval_y: Interval,
     interval_z: Interval,
+}
+
+impl Add<Vec3d> for AABB {
+    type Output = Self;
+
+    fn add(self, rhs: Vec3d) -> Self::Output {
+        Self {
+            interval_x: self.interval_x + rhs.x(),
+            interval_y: self.interval_y + rhs.y(),
+            interval_z: self.interval_z + rhs.z(),
+        }
+    }
+}
+
+impl Add<&Vec3d> for AABB {
+    type Output = Self;
+
+    fn add(self, rhs: &Vec3d) -> Self::Output {
+        Self {
+            interval_x: self.interval_x + rhs.x(),
+            interval_y: self.interval_y + rhs.y(),
+            interval_z: self.interval_z + rhs.z(),
+        }
+    }
+}
+
+
+impl Add<AABB> for AABB {
+    type Output = Self;
+
+    fn add(self, rhs: AABB) -> Self::Output {
+        Self {
+            interval_x: self.interval_x + rhs.interval_x,
+            interval_y: self.interval_y + rhs.interval_y,
+            interval_z: self.interval_z + rhs.interval_z,
+        }
+    }
+}
+
+
+impl Sub<Vec3d> for AABB {
+    type Output = Self;
+
+    fn sub(self, rhs: Vec3d) -> Self::Output {
+        Self {
+            interval_x: self.interval_x - rhs.x(),
+            interval_y: self.interval_y - rhs.y(),
+            interval_z: self.interval_z - rhs.z(),
+        }
+    }
+}
+
+impl Sub<&Vec3d> for AABB {
+    type Output = Self;
+
+    fn sub(self, rhs: &Vec3d) -> Self::Output {
+        Self {
+            interval_x: self.interval_x - rhs.x(),
+            interval_y: self.interval_y - rhs.y(),
+            interval_z: self.interval_z - rhs.z(),
+        }
+    }
 }
 
 
@@ -76,7 +139,7 @@ impl AABB {
                 if origin_axis < ax.min || origin_axis > ax.max {
                     return false;
                 }
-                continue
+                continue;
             }
 
             let adinv = 1.0 / ray_dir;
@@ -297,5 +360,59 @@ mod test_aabb {
         );
 
         assert!(!aabb.hit(&ray, &Interval { min: 0.0, max: 10.0 }));
+    }
+
+    #[test]
+    fn test_aabb_add_vec3d() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 2.0 },
+            Interval { min: 3.0, max: 4.0 },
+            Interval { min: 5.0, max: 6.0 },
+        );
+
+        let result = aabb + Vec3d::new(1.0, 2.0, 3.0);
+        assert_eq!(result.interval_x, Interval { min: 2.0, max: 3.0 });
+        assert_eq!(result.interval_y, Interval { min: 5.0, max: 6.0 });
+        assert_eq!(result.interval_z, Interval { min: 8.0, max: 9.0 });
+    }
+
+    #[test]
+    fn test_aabb_add_ref_vec3d() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 2.0 },
+            Interval { min: 3.0, max: 4.0 },
+            Interval { min: 5.0, max: 6.0 },
+        );
+
+        let result = aabb + &Vec3d::new(1.0, 2.0, 3.0);
+        assert_eq!(result.interval_x, Interval { min: 2.0, max: 3.0 });
+        assert_eq!(result.interval_y, Interval { min: 5.0, max: 6.0 });
+        assert_eq!(result.interval_z, Interval { min: 8.0, max: 9.0 });
+    }
+
+    #[test]
+    fn test_aabb_sub_vec3d() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 2.0 },
+            Interval { min: 3.0, max: 4.0 },
+            Interval { min: 5.0, max: 6.0 },
+        );
+        let result = aabb - Vec3d::new(1.0, 2.0, 3.0);
+        assert_eq!(result.interval_x, Interval { min: 0.0, max: 1.0 });
+        assert_eq!(result.interval_y, Interval { min: 1.0, max: 2.0 });
+        assert_eq!(result.interval_z, Interval { min: 2.0, max: 3.0 });
+    }
+
+    #[test]
+    fn test_aabb_sub_ref_vec3d() {
+        let aabb = AABB::new(
+            Interval { min: 1.0, max: 2.0 },
+            Interval { min: 3.0, max: 4.0 },
+            Interval { min: 5.0, max: 6.0 },
+        );
+        let result = aabb - &Vec3d::new(1.0, 2.0, 3.0);
+        assert_eq!(result.interval_x, Interval { min: 0.0, max: 1.0 });
+        assert_eq!(result.interval_y, Interval { min: 1.0, max: 2.0 });
+        assert_eq!(result.interval_z, Interval { min: 2.0, max: 3.0 });
     }
 }
