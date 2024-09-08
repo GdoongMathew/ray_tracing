@@ -1,9 +1,9 @@
 #[forbid(unsafe_code)]
 
 use std::sync::Arc;
-use crate::object::{BVHNode, HittableVec, Sphere, Quad, bbox, Hittable, Translate, RotateY};
+use crate::object::{BVHNode, HittableVec, Sphere, Quad, bbox, Hittable, Translate, RotateY, Medium};
 use crate::object::material::{Dielectric, Lambertian, Material, Metal, Light};
-use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture, SolidColor};
+use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture, SolidColor, };
 use crate::vec3d::{Vec3d, Color, Point3d};
 use rand::Rng;
 use crate::camera::Camera;
@@ -401,5 +401,113 @@ pub fn cornell_box() -> (Camera, BVHNode) {
     camera.set_look_at(Point3d::new(278.0, 278.0, 0.0));
     camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
     camera.set_defocus_angle(0.0);
+    (camera, BVHNode::from_hittable_vec(Arc::new(world)))
+}
+
+pub fn cornell_smoke() -> (Camera, BVHNode) {
+    let mut world = HittableVec::new();
+
+    let red = Material::Lambertian(Lambertian::new(Vec3d::new(0.65, 0.05, 0.05)));
+    let white = Material::Lambertian(Lambertian::new(Vec3d::new(0.73, 0.73, 0.73)));
+    let green = Material::Lambertian(Lambertian::new(Vec3d::new(0.12, 0.45, 0.15)));
+    let light = Material::Light(Light::from_color(Vec3d::new(7.0, 7.0, 7.0)));
+
+    world.add(Arc::new(Box::new(Quad::new(
+        Point3d::new(555.0, 0.0, 0.0),
+        Vec3d::new(0.0, 555.0, 0.0),
+        Vec3d::new(0.0, 0.0, 555.0),
+        green.clone(),
+    ))));
+    world.add(Arc::new(Box::new(Quad::new(
+        Point3d::zero(),
+        Vec3d::new(0.0, 555.0, 0.0),
+        Vec3d::new(0.0, 0.0, 555.0),
+        red.clone(),
+    ))));
+    world.add(Arc::new(Box::new(Quad::new(
+        Point3d::new(113.0, 554.0, 127.0),
+        Vec3d::new(330.0, 0.0, 0.0),
+        Vec3d::new(0.0, 0.0, 305.0),
+        light.clone(),
+    ))));
+    world.add(Arc::new(Box::new(Quad::new(
+        Point3d::new(0.0, 555.0, 0.0),
+        Vec3d::new(555.0, 0.0, 0.0),
+        Vec3d::new(0.0, 0.0, 555.0),
+        white.clone(),
+    ))));
+    world.add(Arc::new(Box::new(Quad::new(
+        Point3d::zero(),
+        Vec3d::new(555.0, 0.0, 0.0),
+        Vec3d::new(0.0, 0.0, 555.0),
+        white.clone(),
+    ))));
+    world.add(Arc::new(Box::new(Quad::new(
+        Point3d::new(0.0, 0.0, 555.0),
+        Vec3d::new(555.0, 0.0, 0.0),
+        Vec3d::new(0.0, 555.0, 0.0),
+        white.clone(),
+    ))));
+
+    let box1 = bbox(
+        Point3d::zero(),
+        Point3d::new(165.0, 330.0, 165.0),
+        white.clone(),
+    );
+    let box1: Arc<Box<dyn Hittable>> = Arc::new(Box::new(RotateY::new(
+        Arc::new(Box::new(box1)),
+        15.0,
+    )));
+
+    let box1: Arc<Box<dyn Hittable>> = Arc::new(Box::new(Translate::new(
+        box1,
+        Vec3d::new(265.0, 0.0, 295.0),
+    )));
+
+    let box2 = bbox(
+        Point3d::zero(),
+        Point3d::new(165.0, 165.0, 165.0),
+        white.clone(),
+    );
+
+    let box2: Arc<Box<dyn Hittable>> = Arc::new(Box::new(RotateY::new(
+        Arc::new(Box::new(box2)),
+        -18.0,
+    )));
+
+    let box2: Arc<Box<dyn Hittable>> = Arc::new(Box::new(Translate::new(
+        box2,
+        Vec3d::new(130.0, 0.0, 65.0),
+    )));
+
+    world.add(
+        Arc::new(Box::new(Medium::from_color(
+            box1,
+            0.01,
+            Color::zero(),
+        )))
+    );
+    world.add(
+        Arc::new(Box::new(Medium::from_color(
+            box2,
+            0.01,
+            Color::new(1.0, 1.0, 1.0),
+        )))
+    );
+
+
+    let mut camera = Camera::new();
+
+    camera.set_aspect_ratio(1.0);
+    camera.set_resolution_width(600);
+    camera.set_samples_per_pixel(200);
+    camera.set_depth(50);
+    camera.set_background_color(Color::zero());
+    camera.set_v_fov(40.0);
+    camera.set_look_from(Point3d::new(278.0, 278.0, -800.0));
+    camera.set_look_at(Point3d::new(278.0, 278.0, 0.0));
+    camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
+    camera.set_defocus_angle(0.0);
+
     (camera, BVHNode::from_hittable_vec(Arc::new(world)))
 }
