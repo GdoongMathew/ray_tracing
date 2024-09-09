@@ -3,7 +3,7 @@
 use std::sync::Arc;
 use crate::object::{BVHNode, HittableVec, Sphere, Quad, bbox, Hittable, Translate, RotateY, Medium};
 use crate::object::material::{Dielectric, Lambertian, Material, Metal, Light};
-use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture, SolidColor, };
+use crate::object::texture::{Texture, Checker, ImageTexture, PerlinTexture, SolidColor};
 use crate::vec3d::{Vec3d, Color, Point3d};
 use rand::Rng;
 use crate::camera::Camera;
@@ -509,5 +509,133 @@ pub fn cornell_smoke() -> (Camera, BVHNode) {
     camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
     camera.set_defocus_angle(0.0);
 
+    (camera, BVHNode::from_hittable_vec(Arc::new(world)))
+}
+
+pub fn final_scene() -> (Camera, BVHNode) {
+    let mut boxes1 = HittableVec::new();
+
+    let ground = Material::Lambertian(Lambertian::new(Color::new(0.48, 0.83, 0.53)));
+
+    let boxes_per_side = 20;
+
+    for i in 0..boxes_per_side {
+        for j in 0..boxes_per_side {
+            let w = 100.0;
+            let x0 = -1000.0 + i as f64 * w;
+            let z0 = -1000.0 + j as f64 * w;
+            let y0 = 0.0;
+            let x1 = x0 + w;
+            let y1 = rand::thread_rng().gen_range(1.0..101.0);
+            let z1 = z0 + w;
+            let box_ = bbox(
+                Point3d::new(x0, y0, z0),
+                Point3d::new(x1, y1, z1),
+                ground.clone(),
+            );
+            boxes1.add(Arc::new(Box::new(box_)))
+        }
+    }
+    let mut world = HittableVec::new();
+    world.add(Arc::new(Box::new(BVHNode::from_hittable_vec(Arc::new(boxes1)))));
+
+    let light = Material::Light(Light::from_color(Color::new(7.0, 7.0, 7.0)));
+    world.add(Arc::new(Box::new(Quad::new(
+        Point3d::new(123.0, 554.0, 147.0),
+        Vec3d::new(300.0, 0.0, 0.0),
+        Vec3d::new(0.0, 0.0, 265.0),
+        light.clone(),
+    ))));
+
+    let center1 = Point3d::new(400.0, 400.0, 200.0);
+    let center2 = center1 + Vec3d::new(30.0, 0.0, 0.0);
+
+    let sphere_material = Material::Lambertian(Lambertian::new(Color::new(0.7, 0.3, 0.1)));
+    world.add(Arc::new(Box::new(Sphere::moving_sphere(center1, center2, 50.0, sphere_material.clone()))));
+
+    world.add(Arc::new(Box::new(Sphere::static_sphere(
+        Point3d::new(260.0, 150.0, 45.0),
+        50.0,
+        Material::Dielectric(Dielectric::new(1.5)),
+    ))));
+
+    world.add(Arc::new(Box::new(Sphere::static_sphere(
+        Point3d::new(0.0, 150.0, 145.0),
+        50.0,
+        Material::Metal(Metal::new(Color::new(0.8, 0.8, 0.9), 1.0)),
+    ))));
+
+    let boundary: Arc<Box<dyn Hittable>> = Arc::new(Box::new(Sphere::static_sphere(
+        Point3d::new(360.0, 150.0, 145.0),
+        70.0,
+        Material::Dielectric(Dielectric::new(1.5)),
+    )));
+
+    world.add(boundary.clone());
+
+    world.add(Arc::new(Box::new(Medium::from_color(
+        boundary,
+        0.2,
+        Color::new(0.2, 0.4, 0.9),
+    ))));
+
+    let boundary: Arc<Box<dyn Hittable>> = Arc::new(Box::new(Sphere::static_sphere(
+        Point3d::zero(),
+        5000.0,
+        Material::Dielectric(Dielectric::new(1.5)),
+    )));
+    world.add(Arc::new(Box::new(Medium::from_color(
+        boundary,
+        0.0001,
+        Color::new(1.0, 1.0, 1.0),
+    ))));
+
+    let image_file = "./misc/earthmap.png".to_string();
+    let earth_texture: Arc<Box<dyn Texture>> = Arc::new(Box::new(ImageTexture::new(&image_file)));
+    let emat = Material::Lambertian(Lambertian::from_texture(earth_texture));
+    world.add(Arc::new(Box::new(Sphere::static_sphere(
+        Point3d::new(400.0, 200.0, 400.0),
+        100.0,
+        emat,
+    ))));
+
+    let pertext = PerlinTexture::new(0.2);
+    world.add(Arc::new(Box::new(Sphere::static_sphere(
+        Point3d::new(220.0, 280.0, 300.0),
+        80.0,
+        Material::Lambertian(Lambertian::from_texture(Arc::new(Box::new(pertext)))),
+    ))));
+
+    let mut boxes2 = HittableVec::new();
+    let white = Material::Lambertian(Lambertian::new(Color::new(0.73, 0.73, 0.73)));
+    let ns = 1000;
+    for _ in 0..ns {
+        boxes2.add(Arc::new(Box::new(Sphere::static_sphere(
+            Vec3d::gen_range(0.0, 165.0),
+            10.0,
+            white.clone(),
+        ))));
+    }
+
+    world.add(Arc::new(Box::new(Translate::new(
+        Arc::new(Box::new(RotateY::new(
+            Arc::new(Box::new(BVHNode::from_hittable_vec(Arc::new(boxes2)))),
+            15.0,
+        ))),
+        Vec3d::new(-100.0, 270.0, 395.0),
+    ))));
+
+    let mut camera = Camera::new();
+    camera.set_aspect_ratio(1.0);
+    camera.set_resolution_width(1024);
+    camera.set_samples_per_pixel(10000);
+    camera.set_depth(50);
+    camera.set_background_color(Color::zero());
+
+    camera.set_v_fov(40.0);
+    camera.set_look_from(Point3d::new(478.0, 278.0, -600.0));
+    camera.set_look_at(Point3d::new(278.0, 278.0, 0.0));
+    camera.set_v_up(Vec3d::new(0.0, 1.0, 0.0));
+    camera.set_defocus_angle(0.0);
     (camera, BVHNode::from_hittable_vec(Arc::new(world)))
 }
